@@ -2,13 +2,23 @@ import SwiftUI
 
 struct ProcessListView: View {
     enum SortOption: String, CaseIterable, Identifiable {
-        case cpu = "CPU 从高到低"
-        case memory = "内存从高到低"
-        case name = "进程名称"
-        case application = "应用名称"
-        case pid = "PID"
+        case cpu
+        case memory
+        case name
+        case application
+        case pid
 
         var id: String { rawValue }
+
+        var title: String {
+            switch self {
+            case .cpu: L10n.string("process.sort_cpu", fallback: "CPU: High to Low")
+            case .memory: L10n.string("process.sort_memory", fallback: "Memory: High to Low")
+            case .name: L10n.string("process.sort_name", fallback: "Process Name")
+            case .application: L10n.string("process.sort_application", fallback: "Application Name")
+            case .pid: "PID"
+            }
+        }
     }
 
     @ObservedObject var store: MonitorStore
@@ -19,19 +29,26 @@ struct ProcessListView: View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("所有进程")
+                    Text(L10n.string("process.window_title", fallback: "All Processes"))
                         .font(.title2.weight(.semibold))
-                    Text("当前共 \(filteredProcesses.count) / \(store.snapshot.allProcesses.count) 个进程")
+                    Text(
+                        L10n.string(
+                            "process.count",
+                            fallback: "%d of %d processes",
+                            filteredProcesses.count,
+                            store.snapshot.allProcesses.count
+                        )
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
                 Spacer()
-                TextField("搜索进程、应用、PID 或路径", text: $searchText)
+                TextField(L10n.string("process.search_placeholder", fallback: "Search process, app, PID, or path"), text: $searchText)
                     .textFieldStyle(.roundedBorder)
                     .frame(width: 270)
-                Picker("排序", selection: $sortOption) {
+                Picker(L10n.string("process.sort", fallback: "Sort"), selection: $sortOption) {
                     ForEach(SortOption.allCases) { option in
-                        Text(option.rawValue).tag(option)
+                        Text(option.title).tag(option)
                     }
                 }
                 .labelsHidden()
@@ -39,14 +56,14 @@ struct ProcessListView: View {
                 Button { store.sampleNow() } label: {
                     Image(systemName: "arrow.clockwise")
                 }
-                .help("立即刷新")
+                .help(L10n.string("common.refresh_now", fallback: "Refresh Now"))
             }
             .padding(16)
 
             Divider()
 
             Table(filteredProcesses) {
-                TableColumn("进程") { process in
+                TableColumn(L10n.string("process.column_process", fallback: "Process")) { process in
                     VStack(alignment: .leading, spacing: 2) {
                         Text(process.name)
                             .lineLimit(1)
@@ -57,26 +74,30 @@ struct ProcessListView: View {
                 }
                 .width(min: 150, ideal: 210)
 
-                TableColumn("所属应用") { process in
+                TableColumn(L10n.string("process.column_application", fallback: "Application")) { process in
                     Text(process.applicationDisplayName)
                         .lineLimit(1)
                 }
                 .width(min: 120, ideal: 170)
 
-                TableColumn("CPU") { process in
+                TableColumn(L10n.string("common.cpu", fallback: "CPU")) { process in
                     Text("\(process.cpuPercent, specifier: "%.1f")%")
                         .monospacedDigit()
                 }
                 .width(58)
 
-                TableColumn("内存") { process in
+                TableColumn(L10n.string("common.memory", fallback: "Memory")) { process in
                     Text(ByteFormatter.string(process.memoryBytes))
                         .monospacedDigit()
                 }
                 .width(80)
 
-                TableColumn("可执行文件") { process in
-                    Text(process.executablePath.isEmpty ? "不可访问" : process.executablePath)
+                TableColumn(L10n.string("process.column_executable", fallback: "Executable")) { process in
+                    Text(
+                        process.executablePath.isEmpty
+                            ? L10n.string("process.inaccessible", fallback: "Inaccessible")
+                            : process.executablePath
+                    )
                         .lineLimit(1)
                         .foregroundStyle(process.executablePath.isEmpty ? .secondary : .primary)
                         .help(process.executablePath)
@@ -89,9 +110,17 @@ struct ProcessListView: View {
                         Image(systemName: searchText.isEmpty ? "list.bullet.rectangle" : "magnifyingglass")
                             .font(.largeTitle)
                             .foregroundStyle(.secondary)
-                        Text(searchText.isEmpty ? "暂无进程数据" : "没有匹配的进程")
+                        Text(
+                            searchText.isEmpty
+                                ? L10n.string("process.empty", fallback: "No process data")
+                                : L10n.string("process.no_match", fallback: "No matching processes")
+                        )
                             .font(.headline)
-                        Text(searchText.isEmpty ? "等待下一次系统采样" : "请尝试其他关键词")
+                        Text(
+                            searchText.isEmpty
+                                ? L10n.string("process.waiting", fallback: "Waiting for the next system sample")
+                                : L10n.string("process.try_another", fallback: "Try another search term")
+                        )
                             .font(.caption)
                             .foregroundStyle(.secondary)
                     }

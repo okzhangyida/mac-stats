@@ -3,6 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "MacStats",
+    defaultLocalization: "en",
     platforms: [.macOS(.v13)],
     products: [
         .executable(name: "MacStats", targets: ["MacStats"])
@@ -12,6 +13,7 @@ let package = Package(
             name: "MacStats",
             dependencies: ["SensorBridge"],
             path: "Sources/MacStats",
+            resources: [.process("Resources")],
             linkerSettings: [
                 .linkedFramework("IOKit")
             ]

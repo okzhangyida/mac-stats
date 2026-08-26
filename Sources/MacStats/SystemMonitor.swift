@@ -21,6 +21,7 @@ final class SystemMonitor: @unchecked Sendable {
     private var applicationNameCache: [String: String] = [:]
     private var cachedSensors: SensorReading?
     private var lastSensorSampleDate: Date?
+    private lazy var hardwareInfo = readHardwareInfo()
 
     func sample(includeProcesses: Bool = true) -> SystemSnapshot {
         let now = Date()
@@ -32,6 +33,7 @@ final class SystemMonitor: @unchecked Sendable {
         let sensors = sensorInfo(at: now)
 
         return SystemSnapshot(
+            hardware: hardwareInfo,
             cpuPercent: cpuUsage(),
             memoryUsed: memory.used,
             memoryCached: memory.cached,
@@ -172,6 +174,86 @@ final class SystemMonitor: @unchecked Sendable {
 
     private func physicalMemory() -> UInt64 {
         ProcessInfo.processInfo.physicalMemory
+    }
+
+    private func readHardwareInfo() -> HardwareInfo {
+        if let profiled = systemProfilerHardwareInfo() {
+            return profiled
+        }
+
+        return HardwareInfo(
+            cpuModel: sysctlString("machdep.cpu.brand_string")
+                ?? sysctlString("hw.model")
+                ?? L10n.string("hardware.processor_unavailable", fallback: "Processor model unavailable"),
+            cpuCoreCount: ProcessInfo.processInfo.processorCount,
+            gpuCoreCount: nil
+        )
+    }
+
+    private func systemProfilerHardwareInfo() -> HardwareInfo? {
+        let process = Process()
+        let output = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")
+        process.arguments = ["SPHardwareDataType", "SPDisplaysDataType", "-json", "-detailLevel", "mini"]
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+        } catch {
+            return nil
+        }
+
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0,
+              let root = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let hardware = (root["SPHardwareDataType"] as? [[String: Any]])?.first
+        else { return nil }
+
+        let cpuModel = firstNonEmptyString(
+            hardware["chip_type"],
+            hardware["cpu_type"],
+            hardware["processor_name"]
+        ) ?? sysctlString("machdep.cpu.brand_string")
+            ?? sysctlString("hw.model")
+            ?? L10n.string("hardware.processor_unavailable", fallback: "Processor model unavailable")
+
+        let cpuCoreCount = coreCount(from: hardware["number_processors"])
+            ?? coreCount(from: hardware["number_cores"])
+            ?? ProcessInfo.processInfo.processorCount
+
+        let displays = root["SPDisplaysDataType"] as? [[String: Any]] ?? []
+        let matchingDisplay = displays.first {
+            let model = firstNonEmptyString($0["sppci_model"], $0["_name"])
+            return model == cpuModel && coreCount(from: $0["sppci_cores"]) != nil
+        }
+        let gpuCoreCount = coreCount(from: matchingDisplay?["sppci_cores"])
+
+        return HardwareInfo(
+            cpuModel: cpuModel,
+            cpuCoreCount: cpuCoreCount,
+            gpuCoreCount: gpuCoreCount
+        )
+    }
+
+    private func firstNonEmptyString(_ values: Any?...) -> String? {
+        values.compactMap { $0 as? String }.first { !$0.isEmpty }
+    }
+
+    private func coreCount(from value: Any?) -> Int? {
+        if let number = value as? NSNumber { return number.intValue }
+        guard let text = value as? String else { return nil }
+        return text.split(whereSeparator: { !$0.isNumber }).compactMap { Int($0) }.first
+    }
+
+    private func sysctlString(_ name: String) -> String? {
+        var size = 0
+        guard sysctlbyname(name, nil, &size, nil, 0) == 0, size > 1 else { return nil }
+        var buffer = [CChar](repeating: 0, count: size)
+        guard sysctlbyname(name, &buffer, &size, nil, 0) == 0 else { return nil }
+        let bytes = buffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
+        return String(decoding: bytes, as: UTF8.self)
     }
 
     private func diskUsage() -> (used: UInt64, total: UInt64) {
@@ -363,23 +445,23 @@ final class SystemMonitor: @unchecked Sendable {
     private func presetApplicationName(for processName: String) -> String? {
         let key = processName.lowercased()
         let exact: [String: String] = [
-            "kernel_task": "macOS 内核",
-            "launchd": "macOS 服务管理",
-            "windowserver": "macOS 窗口服务",
+            "kernel_task": L10n.string("process.system.kernel", fallback: "macOS Kernel"),
+            "launchd": L10n.string("process.system.service_manager", fallback: "macOS Service Manager"),
+            "windowserver": L10n.string("process.system.window_service", fallback: "macOS Window Service"),
             "mds": "Spotlight",
             "corespotlightd": "Spotlight",
-            "bird": "iCloud 云盘",
+            "bird": L10n.string("process.system.icloud_drive", fallback: "iCloud Drive"),
             "cloudd": "iCloud",
-            "backupd": "时间机器",
-            "photoanalysisd": "照片",
-            "photolibraryd": "照片",
-            "trustd": "macOS 安全服务",
-            "securityd": "macOS 安全服务",
-            "distnoted": "macOS 通知服务",
-            "runningboardd": "macOS 应用管理",
-            "controlcenter": "控制中心",
-            "dock": "程序坞",
-            "finder": "访达"
+            "backupd": L10n.string("process.system.time_machine", fallback: "Time Machine"),
+            "photoanalysisd": L10n.string("process.system.photos", fallback: "Photos"),
+            "photolibraryd": L10n.string("process.system.photos", fallback: "Photos"),
+            "trustd": L10n.string("process.system.security", fallback: "macOS Security Service"),
+            "securityd": L10n.string("process.system.security", fallback: "macOS Security Service"),
+            "distnoted": L10n.string("process.system.notifications", fallback: "macOS Notification Service"),
+            "runningboardd": L10n.string("process.system.app_management", fallback: "macOS App Management"),
+            "controlcenter": L10n.string("process.system.control_center", fallback: "Control Center"),
+            "dock": L10n.string("process.system.dock", fallback: "Dock"),
+            "finder": L10n.string("process.system.finder", fallback: "Finder")
         ]
         if let match = exact[key] { return match }
         if key.hasPrefix("mdworker") { return "Spotlight" }

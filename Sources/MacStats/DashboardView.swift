@@ -47,7 +47,13 @@ struct DashboardView: View {
                 .frame(width: 34, height: 34)
             VStack(alignment: .leading, spacing: 1) {
                 Text("Mac Stats").font(.headline)
-                Text("更新于 \(store.snapshot.sampledAt, format: .dateTime.hour().minute().second())")
+                Text(
+                    L10n.string(
+                        "dashboard.updated_at",
+                        fallback: "Updated %@",
+                        store.snapshot.sampledAt.formatted(.dateTime.hour().minute().second())
+                    )
+                )
                     .font(.caption2)
                     .foregroundStyle(.secondary)
             }
@@ -58,13 +64,13 @@ struct DashboardView: View {
                 Image(systemName: "arrow.clockwise")
             }
             .buttonStyle(.plain)
-            .help("立即刷新")
+            .help(L10n.string("common.refresh_now", fallback: "Refresh Now"))
             settingsButton
             Button { NSApplication.shared.terminate(nil) } label: {
                 Image(systemName: "power")
             }
             .buttonStyle(.plain)
-            .help("退出 Mac Stats")
+            .help(L10n.string("dashboard.quit", fallback: "Quit Mac Stats"))
         }
         .padding(14)
     }
@@ -131,13 +137,13 @@ struct DashboardView: View {
                 Image(systemName: "gearshape")
             }
             .buttonStyle(.plain)
-            .help("设置")
+            .help(L10n.string("common.settings", fallback: "Settings"))
         } else if #available(macOS 14.0, *) {
             SettingsLink {
                 Image(systemName: "gearshape")
             }
             .buttonStyle(.plain)
-            .help("设置")
+            .help(L10n.string("common.settings", fallback: "Settings"))
         } else {
             Button {
                 NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
@@ -146,7 +152,7 @@ struct DashboardView: View {
                 Image(systemName: "gearshape")
             }
             .buttonStyle(.plain)
-            .help("设置")
+            .help(L10n.string("common.settings", fallback: "Settings"))
         }
     }
 
@@ -154,15 +160,16 @@ struct DashboardView: View {
         Grid(horizontalSpacing: 10, verticalSpacing: 10) {
             GridRow {
                 MetricCard(
-                    title: "CPU",
+                    title: L10n.string("common.cpu", fallback: "CPU"),
                     value: percent(store.snapshot.cpuPercent),
-                    detail: "总处理器负载",
+                    detail: store.snapshot.hardware.compactDescription,
+                    detailHelp: store.snapshot.hardware.fullDescription,
                     icon: "cpu",
                     color: .blue,
                     progress: store.snapshot.cpuPercent / 100
                 )
                 MetricCard(
-                    title: "内存",
+                    title: L10n.string("common.memory", fallback: "Memory"),
                     value: percent(store.memoryPercent),
                     detail: memoryDetail,
                     icon: "memorychip",
@@ -172,16 +179,22 @@ struct DashboardView: View {
             }
             GridRow {
                 MetricCard(
-                    title: "磁盘",
+                    title: L10n.string("common.disk", fallback: "Disk"),
                     value: percent(store.diskPercent),
-                    detail: "已用 \(ByteFormatter.string(store.snapshot.diskUsed)) / 总计 \(ByteFormatter.string(store.snapshot.diskTotal))",
+                    detail: L10n.string(
+                        "dashboard.disk_detail",
+                        fallback: "Used %@ / Total %@",
+                        ByteFormatter.string(store.snapshot.diskUsed),
+                        ByteFormatter.string(store.snapshot.diskTotal)
+                    ),
                     icon: "internaldrive",
                     color: .orange,
                     progress: store.diskPercent / 100
                 )
                 MetricCard(
-                    title: "电池",
-                    value: store.snapshot.batteryPercent.map(percent) ?? "台式设备",
+                    title: L10n.string("common.battery", fallback: "Battery"),
+                    value: store.snapshot.batteryPercent.map(percent)
+                        ?? L10n.string("dashboard.desktop_device", fallback: "Desktop Mac"),
                     detail: batteryDetail,
                     icon: store.snapshot.batteryCharging ? "battery.100percent.bolt" : "battery.75percent",
                     color: .green,
@@ -190,7 +203,7 @@ struct DashboardView: View {
             }
             GridRow {
                 MetricCard(
-                    title: "温度",
+                    title: L10n.string("common.temperature", fallback: "Temperature"),
                     value: temperatureValue,
                     detail: temperatureDetail,
                     icon: "thermometer.medium",
@@ -208,18 +221,18 @@ struct DashboardView: View {
     private var processesCard: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("高占用进程", systemImage: "list.number")
+                Label(L10n.string("dashboard.top_processes", fallback: "Top Processes"), systemImage: "list.number")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
-                Text("CPU")
+                Text(L10n.string("common.cpu", fallback: "CPU"))
                     .frame(width: ProcessColumnLayout.cpuWidth, alignment: .trailing)
-                Text("内存")
+                Text(L10n.string("common.memory", fallback: "Memory"))
                     .frame(width: ProcessColumnLayout.memoryWidth, alignment: .trailing)
             }
             .font(.caption2)
             .foregroundStyle(.secondary)
             if store.snapshot.topProcesses.isEmpty {
-                Text("等待下一次采样…")
+                Text(L10n.string("dashboard.waiting_sample", fallback: "Waiting for the next sample…"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -242,7 +255,7 @@ struct DashboardView: View {
             }
             HStack {
                 Spacer()
-                Button("查看全部") {
+                Button(L10n.string("dashboard.view_all", fallback: "View All")) {
                     dismiss()
                     DispatchQueue.main.async {
                         if let openProcessesAction {
@@ -261,7 +274,7 @@ struct DashboardView: View {
 
     private var systemFooter: some View {
         HStack {
-            Label("运行 \(uptimeText)", systemImage: "clock")
+            Label(L10n.string("dashboard.uptime", fallback: "Up %@", uptimeText), systemImage: "clock")
             Spacer()
             Text(ProcessInfo.processInfo.operatingSystemVersionString)
                 .lineLimit(1)
@@ -278,32 +291,49 @@ struct DashboardView: View {
     }
 
     private var batteryDetail: String {
-        guard store.snapshot.batteryPercent != nil else { return "未检测到电池" }
-        var parts = [store.snapshot.batteryCharging ? "已接入电源" : "正在使用电池"]
-        if let cycles = store.snapshot.batteryCycleCount { parts.append("\(cycles) 次循环") }
+        guard store.snapshot.batteryPercent != nil else {
+            return L10n.string("dashboard.no_battery", fallback: "No battery detected")
+        }
+        var parts = [
+            store.snapshot.batteryCharging
+                ? L10n.string("dashboard.power_connected", fallback: "Power connected")
+                : L10n.string("dashboard.on_battery", fallback: "On battery")
+        ]
+        if let cycles = store.snapshot.batteryCycleCount {
+            parts.append(L10n.string("dashboard.battery_cycles", fallback: "%d cycles", cycles))
+        }
         if let health = store.snapshot.batteryHealth, !health.isEmpty { parts.append(health) }
         return parts.joined(separator: " · ")
     }
 
     private var temperatureValue: String {
         store.snapshot.averageTemperature.map { String(format: "%.0f°C", $0) }
-            ?? store.snapshot.thermalCondition.rawValue
+            ?? store.snapshot.thermalCondition.title
     }
 
     private var temperatureDetail: String {
         if let hottest = store.snapshot.hottestTemperature {
-            return "最高 \(String(format: "%.0f°C", hottest)) · 热状态\(store.snapshot.thermalCondition.rawValue)"
+            return L10n.string(
+                "dashboard.temp_highest",
+                fallback: "Peak %@ · Thermal state: %@",
+                String(format: "%.0f°C", hottest),
+                store.snapshot.thermalCondition.title
+            )
         }
-        return "无法读取摄氏温度 · 热状态\(store.snapshot.thermalCondition.rawValue)"
+        return L10n.string(
+            "dashboard.temp_unavailable",
+            fallback: "Temperature unavailable · Thermal state: %@",
+            store.snapshot.thermalCondition.title
+        )
     }
 
     private var memoryDetail: String {
-        let used = ByteFormatter.string(store.displayedMemoryUsed)
-        let cached = ByteFormatter.string(store.snapshot.memoryCached)
-        let total = ByteFormatter.string(store.snapshot.memoryTotal)
+        let used = ByteFormatter.memory(store.displayedMemoryUsed)
+        let cached = ByteFormatter.memory(store.snapshot.memoryCached)
+        let total = ByteFormatter.memory(store.snapshot.memoryTotal)
         return store.includeCachedMemory
-            ? "含缓存 \(used) / \(total)"
-            : "已用 \(used) · 缓存 \(cached)"
+            ? L10n.string("dashboard.memory_with_cache", fallback: "With cache %@ / %@", used, total)
+            : L10n.string("dashboard.memory_detail", fallback: "Used %@ / Total %@ · Cache %@", used, total, cached)
     }
 
     private func percent(_ value: Double) -> String {
@@ -323,7 +353,7 @@ private struct FanCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label("风扇", systemImage: "fan")
+                Label(L10n.string("common.fan", fallback: "Fan"), systemImage: "fan")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -358,11 +388,11 @@ private struct FanCard: View {
                 }
             }
         case .fanless:
-            Label("无风扇设计", systemImage: "fan")
+            Label(L10n.string("fan.fanless", fallback: "Fanless design"), systemImage: "fan")
                 .font(.system(.body, design: .rounded).weight(.semibold))
                 .foregroundStyle(.secondary)
         default:
-            Label("不可读取", systemImage: "fan")
+            Label(L10n.string("common.unavailable", fallback: "Unavailable"), systemImage: "fan")
                 .font(.system(.body, design: .rounded).weight(.semibold))
                 .foregroundStyle(.secondary)
         }
@@ -406,6 +436,7 @@ private struct MetricCard: View {
     let title: String
     let value: String
     let detail: String
+    var detailHelp: String? = nil
     let icon: String
     let color: Color
     let progress: Double
@@ -427,6 +458,9 @@ private struct MetricCard: View {
                 .font(.caption2)
                 .foregroundStyle(.secondary)
                 .lineLimit(1)
+                .minimumScaleFactor(0.76)
+                .allowsTightening(true)
+                .help(detailHelp ?? detail)
         }
         .frame(
             maxWidth: .infinity,
@@ -450,35 +484,35 @@ private struct HistoryCard: View {
                     .font(.subheadline.weight(.semibold))
                 Spacer()
                 HStack(spacing: 10) {
-                    legend("CPU", .blue)
-                    legend("内存", .purple)
-                    legend("CPU 温度", .orange)
+                    legend(L10n.string("common.cpu", fallback: "CPU"), .blue)
+                    legend(L10n.string("common.memory", fallback: "Memory"), .purple)
+                    legend(L10n.string("dashboard.cpu_temperature", fallback: "CPU Temp"), .orange)
                 }
             }
             Chart {
                 ForEach(cpu) { point in
                     LineMark(
-                        x: .value("时间", point.date),
-                        y: .value("数值", point.value),
-                        series: .value("指标", "CPU")
+                        x: .value(L10n.string("dashboard.chart_time", fallback: "Time"), point.date),
+                        y: .value(L10n.string("dashboard.chart_value", fallback: "Value"), point.value),
+                        series: .value(L10n.string("dashboard.chart_metric", fallback: "Metric"), L10n.string("common.cpu", fallback: "CPU"))
                     )
                         .foregroundStyle(.blue)
                         .interpolationMethod(.catmullRom)
                 }
                 ForEach(memory) { point in
                     LineMark(
-                        x: .value("时间", point.date),
-                        y: .value("数值", point.value),
-                        series: .value("指标", "内存")
+                        x: .value(L10n.string("dashboard.chart_time", fallback: "Time"), point.date),
+                        y: .value(L10n.string("dashboard.chart_value", fallback: "Value"), point.value),
+                        series: .value(L10n.string("dashboard.chart_metric", fallback: "Metric"), L10n.string("common.memory", fallback: "Memory"))
                     )
                         .foregroundStyle(.purple)
                         .interpolationMethod(.catmullRom)
                 }
                 ForEach(temperature) { point in
                     LineMark(
-                        x: .value("时间", point.date),
-                        y: .value("温度", point.value),
-                        series: .value("指标", "CPU 温度")
+                        x: .value(L10n.string("dashboard.chart_time", fallback: "Time"), point.date),
+                        y: .value(L10n.string("dashboard.chart_temperature", fallback: "Temperature"), point.value),
+                        series: .value(L10n.string("dashboard.chart_metric", fallback: "Metric"), L10n.string("dashboard.cpu_temperature", fallback: "CPU Temp"))
                     )
                         .foregroundStyle(.orange)
                         .interpolationMethod(.catmullRom)
@@ -523,7 +557,9 @@ private struct HistoryCard: View {
         }
     }
 
-    private var durationTitle: String { "最近 2 分钟" }
+    private var durationTitle: String {
+        L10n.string("dashboard.last_two_minutes", fallback: "Last 2 Minutes")
+    }
 
     private var chartDomain: ClosedRange<Date> {
         let end = Date()

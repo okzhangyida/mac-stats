@@ -13,7 +13,7 @@ final class ProcessWindowCoordinator {
         if windowController == nil {
             let hostingController = NSHostingController(rootView: ProcessListView(store: store))
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "所有进程"
+            window.title = L10n.string("process.window_title", fallback: "All Processes")
             window.setContentSize(NSSize(width: 920, height: 620))
             window.minSize = NSSize(width: 760, height: 480)
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]

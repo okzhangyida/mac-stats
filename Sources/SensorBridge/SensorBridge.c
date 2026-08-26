@@ -92,6 +92,8 @@ static io_connect_t openSMC(void) {
 }
 
 static bool readSMCKey(io_connect_t connection, const char key[4], SMCKeyInfo *info, uint8_t bytes[32]) {
+    if (connection == IO_OBJECT_NULL || !key || !bytes) return false;
+
     SMCParam input = {0};
     SMCParam output = {0};
     input.key = fourChar(key);
@@ -101,7 +103,8 @@ static bool readSMCKey(io_connect_t connection, const char key[4], SMCKeyInfo *i
     kern_return_t result = IOConnectCallStructMethod(
         connection, SMCSelector, &input, sizeof(input), &output, &outputSize
     );
-    if (result != KERN_SUCCESS || output.result != 0 || output.keyInfo.dataSize == 0) return false;
+    if (result != KERN_SUCCESS || output.result != 0 ||
+        output.keyInfo.dataSize == 0 || output.keyInfo.dataSize > sizeof(output.bytes)) return false;
 
     input.keyInfo.dataSize = output.keyInfo.dataSize;
     input.data8 = SMCReadBytes;
@@ -118,10 +121,15 @@ static bool readSMCKey(io_connect_t connection, const char key[4], SMCKeyInfo *i
         input.data8 = SMCReadKeyInfo;
         outputSize = sizeof(keyInfoOutput);
         if (IOConnectCallStructMethod(connection, SMCSelector, &input, sizeof(input), &keyInfoOutput, &outputSize) == KERN_SUCCESS) {
-            *info = keyInfoOutput.keyInfo;
+            if (keyInfoOutput.keyInfo.dataSize > 0 && keyInfoOutput.keyInfo.dataSize <= sizeof(output.bytes)) {
+                *info = keyInfoOutput.keyInfo;
+            }
         }
     }
-    memcpy(bytes, output.bytes, 32);
+    uint32_t dataSize = info ? info->dataSize : input.keyInfo.dataSize;
+    if (dataSize == 0 || dataSize > sizeof(output.bytes)) return false;
+    memset(bytes, 0, 32);
+    memcpy(bytes, output.bytes, dataSize);
     return true;
 }
 
@@ -225,6 +233,12 @@ static void readHIDTemperatures(MSCSensorSnapshot *snapshot) {
     int usage = 5;
     CFNumberRef pageNumber = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usagePage);
     CFNumberRef usageNumber = CFNumberCreate(kCFAllocatorDefault, kCFNumberIntType, &usage);
+    if (!pageNumber || !usageNumber) {
+        if (pageNumber) CFRelease(pageNumber);
+        if (usageNumber) CFRelease(usageNumber);
+        dlclose(handle);
+        return;
+    }
     const void *keys[] = {CFSTR("PrimaryUsagePage"), CFSTR("PrimaryUsage")};
     const void *values[] = {pageNumber, usageNumber};
     CFDictionaryRef matching = CFDictionaryCreate(

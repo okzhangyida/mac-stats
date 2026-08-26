@@ -24,6 +24,10 @@ cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
 cp "$PROJECT_DIR/Resources/AppIcon.icns" "$APP_DIR/Contents/Resources/AppIcon.icns"
 cp "$PROJECT_DIR/Resources/MenuBarIcon.png" "$APP_DIR/Contents/Resources/MenuBarIcon.png"
 cp "$PROJECT_DIR/Resources/MenuBarIcon@2x.png" "$APP_DIR/Contents/Resources/MenuBarIcon@2x.png"
-codesign --force --deep --sign - "$APP_DIR"
+cp "$PROJECT_DIR/Resources/PrivacyInfo.xcprivacy" "$APP_DIR/Contents/Resources/PrivacyInfo.xcprivacy"
+for localization in "$PROJECT_DIR"/Sources/MacStats/Resources/*.lproj; do
+    ditto "$localization" "$APP_DIR/Contents/Resources/${localization:t}"
+done
+codesign --force --deep --options runtime --timestamp=none --sign - "$APP_DIR"
 
 echo "$APP_DIR"

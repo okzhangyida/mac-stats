@@ -10,8 +10,8 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
-            Section("外观") {
-                Picker("界面外观", selection: $appAppearance) {
+            Section(L10n.string("settings.appearance_section", fallback: "Appearance")) {
+                Picker(L10n.string("settings.appearance_picker", fallback: "App Appearance"), selection: $appAppearance) {
                     ForEach(AppAppearance.allCases) { appearance in
                         Text(appearance.title).tag(appearance.rawValue)
                     }
@@ -20,13 +20,13 @@ struct SettingsView: View {
                 .onChange(of: appAppearance) { newValue in
                     AppAppearance.apply(newValue)
                 }
-                Text("选择“跟随系统”时，会随 macOS 浅色或深色外观自动切换。")
+                Text(L10n.string("settings.appearance_help", fallback: "When set to System, the app follows the macOS light or dark appearance."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Section("菜单栏") {
-                Text("显示指标（最多两个）")
+            Section(L10n.string("settings.menu_bar_section", fallback: "Menu Bar")) {
+                Text(L10n.string("settings.metrics_limit", fallback: "Display metrics (up to two)"))
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 ForEach(DisplayMetric.allCases) { metric in
@@ -36,40 +36,46 @@ struct SettingsView: View {
                     .disabled(!selectedMetrics.contains(metric) && selectedMetrics.count >= 2)
                 }
                 if selectedMetrics.isEmpty {
-                    Text("当前仅显示菜单栏图标")
+                    Text(L10n.string("settings.icon_only", fallback: "Only the menu bar icon is shown"))
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 } else {
-                    Text("显示顺序：\(selectedMetrics.map(\.title).joined(separator: " → "))")
+                    Text(
+                        L10n.string(
+                            "settings.display_order",
+                            fallback: "Display order: %@",
+                            selectedMetrics.map(\.title).joined(separator: " → ")
+                        )
+                    )
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-                Picker("刷新间隔", selection: $store.refreshInterval) {
-                    Text("1 秒").tag(1.0)
-                    Text("2 秒").tag(2.0)
-                    Text("5 秒").tag(5.0)
+                Picker(L10n.string("settings.refresh_interval", fallback: "Refresh Interval"), selection: $store.refreshInterval) {
+                    Text(L10n.string("settings.seconds", fallback: "%d sec", 1)).tag(1.0)
+                    Text(L10n.string("settings.seconds", fallback: "%d sec", 2)).tag(2.0)
+                    Text(L10n.string("settings.seconds", fallback: "%d sec", 5)).tag(5.0)
                 }
                 .onChange(of: store.refreshInterval) { _ in store.restart() }
-                Toggle("登录时自动启动", isOn: launchAtLoginBinding)
+                Toggle(L10n.string("settings.launch_at_login", fallback: "Launch at Login"), isOn: launchAtLoginBinding)
                     .toggleStyle(.switch)
                 if let launchError {
                     Text(launchError).font(.caption).foregroundStyle(.red)
                 }
             }
 
-            Section("内存") {
-                Toggle("内存占用包含缓存文件", isOn: $store.includeCachedMemory)
+            Section(L10n.string("settings.memory_section", fallback: "Memory")) {
+                Toggle(L10n.string("settings.include_cache", fallback: "Include file cache in memory usage"), isOn: $store.includeCachedMemory)
                     .toggleStyle(.switch)
                     .onChange(of: store.includeCachedMemory) { _ in
                         store.resetMemoryHistory()
                     }
-                Text("关闭时按已使用内存计算；开启后会把可回收的文件缓存计入占用。")
+                Text(L10n.string("settings.cache_help", fallback: "When disabled, usage reflects memory used. When enabled, reclaimable file cache is also included."))
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
 
-            Section("隐私") {
-                Label("所有监测数据仅在本机处理，不会上传。", systemImage: "hand.raised.fill")
+            Section(L10n.string("settings.privacy_section", fallback: "Privacy")) {
+                Label(L10n.string("settings.privacy_notice", fallback: "All monitoring data is processed locally and is never uploaded."), systemImage: "hand.raised.fill")
                     .foregroundStyle(.secondary)
             }
         }
@@ -119,7 +125,11 @@ struct SettingsView: View {
             launchError = nil
         } catch {
             launchAtLogin = SMAppService.mainApp.status == .enabled
-            launchError = "无法更新登录项：\(error.localizedDescription)"
+            launchError = L10n.string(
+                "settings.login_item_error",
+                fallback: "Couldn’t update the login item: %@",
+                error.localizedDescription
+            )
         }
     }
 }

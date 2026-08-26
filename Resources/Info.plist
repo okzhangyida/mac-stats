@@ -3,7 +3,12 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleDevelopmentRegion</key>
-    <string>zh_CN</string>
+    <string>en</string>
+    <key>CFBundleLocalizations</key>
+    <array>
+        <string>en</string>
+        <string>zh-Hans</string>
+    </array>
     <key>CFBundleExecutable</key>
     <string>MacStats</string>
     <key>CFBundleIdentifier</key>
@@ -17,9 +22,11 @@
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
-    <string>0.4.9</string>
-    <key>CFBundleVersion</key>
-    <string>15</string>
+    <string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>17</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>Copyright © 2026 Mac Stats. All rights reserved.</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>

@@ -41,7 +41,7 @@ struct MacStatsApp: App {
                 .frame(width: 470, height: 500)
         }
 
-        Window("所有进程", id: "processes") {
+        Window(L10n.string("process.window_title", fallback: "All Processes"), id: "processes") {
             ProcessListView(store: store)
         }
         .defaultSize(width: 920, height: 620)
@@ -65,27 +65,29 @@ struct MacStatsApp: App {
         case .cpu:
             return String(format: "CPU %.0f%%", store.snapshot.cpuPercent)
         case .memory:
-            return String(format: "内存 %.0f%%", store.memoryPercent)
+            return L10n.string("status.memory_percent", fallback: "Memory %.0f%%", store.memoryPercent)
         case .disk:
-            return String(format: "磁盘 %.0f%%", store.diskPercent)
+            return L10n.string("status.disk_percent", fallback: "Disk %.0f%%", store.diskPercent)
         case .network:
             return "↓\(ByteFormatter.compactRate(store.snapshot.networkDownPerSecond)) ↑\(ByteFormatter.compactRate(store.snapshot.networkUpPerSecond))"
         case .battery:
-            return store.snapshot.batteryPercent.map { String(format: "电池 %.0f%%", $0) } ?? "电池 —"
+            return store.snapshot.batteryPercent.map {
+                L10n.string("status.battery_percent", fallback: "Battery %.0f%%", $0)
+            } ?? "B —"
         case .temperature:
             return store.snapshot.averageTemperature.map { String(format: "%.0f°C", $0) }
-                ?? "温度 \(store.snapshot.thermalCondition.rawValue)"
+                ?? "\(L10n.string("common.temperature", fallback: "Temperature")) \(store.snapshot.thermalCondition.title)"
         case .fan:
             switch store.snapshot.fanAvailability {
             case .available:
                 if let fastest = store.snapshot.fans.map(\.rpm).max() {
-                    return String(format: "风扇 %.0f", fastest)
+                    return L10n.string("fan.rpm_value", fallback: "Fan %.0f", fastest)
                 }
-                return "风扇 0"
+                return L10n.string("fan.zero", fallback: "Fan 0")
             case .fanless:
-                return "无风扇"
+                return L10n.string("fan.fanless", fallback: "Fanless design")
             case .unavailable:
-                return "风扇 —"
+                return "\(L10n.string("common.fan", fallback: "Fan")) —"
             }
         }
     }
@@ -97,7 +99,8 @@ struct MacStatsApp: App {
             image = bundled
         } else {
             image = NSImage(systemSymbolName: "gauge.open.with.lines.needle.33percent", accessibilityDescription: "Mac Stats")
-                ?? NSImage(systemSymbolName: "gauge", accessibilityDescription: "Mac Stats")!
+                ?? NSImage(systemSymbolName: "gauge", accessibilityDescription: "Mac Stats")
+                ?? NSImage(size: NSSize(width: 18, height: 18))
         }
         image.isTemplate = true
         image.size = NSSize(width: 18, height: 18)

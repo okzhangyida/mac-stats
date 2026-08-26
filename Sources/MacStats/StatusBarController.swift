@@ -137,7 +137,7 @@ final class StatusBarController: NSObject {
         if settingsWindowController == nil {
             let hostingController = NSHostingController(rootView: SettingsView(store: store))
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "Mac Stats 设置"
+            window.title = L10n.string("settings.window_title", fallback: "Mac Stats Settings")
             window.setContentSize(NSSize(width: 470, height: 500))
             window.minSize = NSSize(width: 470, height: 500)
             window.styleMask = [.titled, .closable, .miniaturizable]
@@ -155,7 +155,7 @@ final class StatusBarController: NSObject {
         if processWindowController == nil {
             let hostingController = NSHostingController(rootView: ProcessListView(store: store))
             let window = NSWindow(contentViewController: hostingController)
-            window.title = "所有进程"
+            window.title = L10n.string("process.window_title", fallback: "All Processes")
             window.setContentSize(NSSize(width: 920, height: 620))
             window.minSize = NSSize(width: 760, height: 480)
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
@@ -197,8 +197,8 @@ final class StatusBarController: NSObject {
     }
 
     private var accessibilityMenuLabel: String {
-        let metrics = selectedMetrics.map(accessibilityMetricText).joined(separator: "，")
-        return metrics.isEmpty ? "Mac Stats" : "Mac Stats，\(metrics)"
+        let metrics = selectedMetrics.map(accessibilityMetricText).joined(separator: ", ")
+        return metrics.isEmpty ? "Mac Stats" : "Mac Stats, \(metrics)"
     }
 
     private func accessibilityMetricText(_ metric: DisplayMetric) -> String {
@@ -206,20 +206,31 @@ final class StatusBarController: NSObject {
         case .cpu:
             return String(format: "CPU %.0f%%", store.snapshot.cpuPercent)
         case .memory:
-            return String(format: "内存 %.0f%%", store.memoryPercent)
+            return L10n.string("status.memory_percent", fallback: "Memory %.0f%%", store.memoryPercent)
         case .disk:
-            return String(format: "磁盘 %.0f%%", store.diskPercent)
+            return L10n.string("status.disk_percent", fallback: "Disk %.0f%%", store.diskPercent)
         case .network:
-            return "下载 \(ByteFormatter.compactRate(store.snapshot.networkDownPerSecond))，上传 \(ByteFormatter.compactRate(store.snapshot.networkUpPerSecond))"
+            return L10n.string(
+                "status.network_rates",
+                fallback: "Download %@, Upload %@",
+                ByteFormatter.compactRate(store.snapshot.networkDownPerSecond),
+                ByteFormatter.compactRate(store.snapshot.networkUpPerSecond)
+            )
         case .battery:
-            return store.snapshot.batteryPercent.map { String(format: "电池 %.0f%%", $0) } ?? "未检测到电池"
+            return store.snapshot.batteryPercent.map {
+                L10n.string("status.battery_percent", fallback: "Battery %.0f%%", $0)
+            } ?? L10n.string("dashboard.no_battery", fallback: "No battery detected")
         case .temperature:
-            return store.snapshot.averageTemperature.map { String(format: "温度 %.0f 摄氏度", $0) } ?? "温度不可读取"
+            return store.snapshot.averageTemperature.map {
+                L10n.string("status.temperature_value", fallback: "Temperature %.0f degrees Celsius", $0)
+            } ?? L10n.string("status.temperature_unavailable", fallback: "Temperature unavailable")
         case .fan:
             if let fastest = store.snapshot.fans.map(\.rpm).max() {
-                return String(format: "风扇每分钟 %.0f 转", fastest)
+                return L10n.string("fan.rpm_accessibility", fallback: "Fan %.0f RPM", fastest)
             }
-            return store.snapshot.fanAvailability == .fanless ? "无风扇设计" : "风扇不可读取"
+            return store.snapshot.fanAvailability == .fanless
+                ? L10n.string("fan.fanless", fallback: "Fanless design")
+                : L10n.string("fan.unreadable", fallback: "Fan unavailable")
         }
     }
 

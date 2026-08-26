@@ -16,7 +16,9 @@ struct ProcessMetric: Identifiable, Equatable {
 
     var id: Int32 { pid }
 
-    var applicationDisplayName: String { applicationName ?? "系统或后台进程" }
+    var applicationDisplayName: String {
+        applicationName ?? L10n.string("process.background", fallback: "System or background process")
+    }
 
     var displayName: String {
         guard let applicationName,
@@ -27,11 +29,21 @@ struct ProcessMetric: Identifiable, Equatable {
 }
 
 enum ThermalCondition: String, Equatable {
-    case nominal = "正常"
-    case fair = "偏热"
-    case serious = "较热"
-    case critical = "严重"
-    case unknown = "未知"
+    case nominal
+    case fair
+    case serious
+    case critical
+    case unknown
+
+    var title: String {
+        switch self {
+        case .nominal: L10n.string("thermal.nominal", fallback: "Normal")
+        case .fair: L10n.string("thermal.fair", fallback: "Warm")
+        case .serious: L10n.string("thermal.serious", fallback: "Hot")
+        case .critical: L10n.string("thermal.critical", fallback: "Critical")
+        case .unknown: L10n.string("thermal.unknown", fallback: "Unknown")
+        }
+    }
 }
 
 enum FanAvailability: Equatable {
@@ -47,13 +59,42 @@ struct FanMetric: Identifiable, Equatable {
     var id: Int { index }
 
     var name: String {
-        if index == 0 { return "左侧风扇" }
-        if index == 1 { return "右侧风扇" }
-        return "风扇 \(index + 1)"
+        if index == 0 { return L10n.string("fan.left", fallback: "Left fan") }
+        if index == 1 { return L10n.string("fan.right", fallback: "Right fan") }
+        return L10n.string("fan.numbered", fallback: "Fan %d", index + 1)
+    }
+}
+
+struct HardwareInfo: Equatable {
+    var cpuModel = L10n.string("hardware.processor_unavailable", fallback: "Processor model unavailable")
+    var cpuCoreCount = 0
+    var gpuCoreCount: Int?
+
+    var compactDescription: String {
+        guard cpuCoreCount > 0 else { return cpuModel }
+        if let gpuCoreCount, gpuCoreCount > 0 {
+            return "\(cpuModel) · \(cpuCoreCount)C CPU / \(gpuCoreCount)C GPU"
+        }
+        return "\(cpuModel) · \(cpuCoreCount)C CPU"
+    }
+
+    var fullDescription: String {
+        guard cpuCoreCount > 0 else { return cpuModel }
+        if let gpuCoreCount, gpuCoreCount > 0 {
+            return L10n.string(
+                "hardware.cpu_gpu_cores",
+                fallback: "%@ · %d-core CPU / %d-core GPU",
+                cpuModel,
+                cpuCoreCount,
+                gpuCoreCount
+            )
+        }
+        return L10n.string("hardware.cpu_cores", fallback: "%@ · %d-core CPU", cpuModel, cpuCoreCount)
     }
 }
 
 struct SystemSnapshot: Equatable {
+    var hardware = HardwareInfo()
     var cpuPercent = 0.0
     var memoryUsed: UInt64 = 0
     var memoryCached: UInt64 = 0
@@ -98,12 +139,12 @@ enum DisplayMetric: String, CaseIterable, Identifiable {
     var title: String {
         switch self {
         case .cpu: "CPU"
-        case .memory: "内存"
-        case .disk: "磁盘"
-        case .network: "网络"
-        case .battery: "电池"
-        case .temperature: "温度"
-        case .fan: "风扇"
+        case .memory: L10n.string("common.memory", fallback: "Memory")
+        case .disk: L10n.string("common.disk", fallback: "Disk")
+        case .network: L10n.string("common.network", fallback: "Network")
+        case .battery: L10n.string("common.battery", fallback: "Battery")
+        case .temperature: L10n.string("common.temperature", fallback: "Temperature")
+        case .fan: L10n.string("common.fan", fallback: "Fan")
         }
     }
 
@@ -130,6 +171,13 @@ enum ByteFormatter {
 
     static func string(_ bytes: UInt64) -> String {
         formatter().string(fromByteCount: Int64(clamping: bytes))
+    }
+
+    static func memory(_ bytes: UInt64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .memory
+        formatter.allowedUnits = [.useMB, .useGB, .useTB]
+        return formatter.string(fromByteCount: Int64(clamping: bytes))
     }
 
     static func rate(_ bytesPerSecond: Double) -> String {
