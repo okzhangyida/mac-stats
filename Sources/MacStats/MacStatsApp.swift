@@ -5,6 +5,7 @@ import SwiftUI
 struct MacStatsApp: App {
     @StateObject private var store = MonitorStore()
     @AppStorage("displayMetrics") private var displayMetrics = "cpu,memory"
+    @AppStorage("appAppearance") private var appAppearance = AppAppearance.system.rawValue
 
     var body: some Scene {
         MenuBarExtra {
@@ -25,7 +26,13 @@ struct MacStatsApp: App {
                     Text(menuTitle)
                 }
             }
-            .onAppear { store.start() }
+            .onAppear {
+                AppAppearance.apply(appAppearance)
+                store.start()
+            }
+            .onChange(of: appAppearance) { newValue in
+                AppAppearance.apply(newValue)
+            }
         }
         .menuBarExtraStyle(.window)
 

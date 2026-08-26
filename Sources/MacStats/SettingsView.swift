@@ -4,11 +4,27 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var store: MonitorStore
     @AppStorage("displayMetrics") private var displayMetrics = "cpu,memory"
+    @AppStorage("appAppearance") private var appAppearance = AppAppearance.system.rawValue
     @State private var launchAtLogin = SMAppService.mainApp.status == .enabled
     @State private var launchError: String?
 
     var body: some View {
         Form {
+            Section("外观") {
+                Picker("界面外观", selection: $appAppearance) {
+                    ForEach(AppAppearance.allCases) { appearance in
+                        Text(appearance.title).tag(appearance.rawValue)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .onChange(of: appAppearance) { newValue in
+                    AppAppearance.apply(newValue)
+                }
+                Text("选择“跟随系统”时，会随 macOS 浅色或深色外观自动切换。")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
             Section("菜单栏") {
                 Text("显示指标（最多两个）")
                     .font(.caption)
@@ -60,6 +76,7 @@ struct SettingsView: View {
         .formStyle(.grouped)
         .padding()
         .onAppear {
+            AppAppearance.apply(appAppearance)
             launchAtLogin = SMAppService.mainApp.status == .enabled
         }
     }

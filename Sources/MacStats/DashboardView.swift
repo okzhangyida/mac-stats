@@ -211,8 +211,13 @@ struct DashboardView: View {
                 Label("高占用进程", systemImage: "list.number")
                     .font(.subheadline.weight(.semibold))
                 Spacer()
-                Text("CPU / 内存").font(.caption2).foregroundStyle(.secondary)
+                Text("CPU")
+                    .frame(width: ProcessColumnLayout.cpuWidth, alignment: .trailing)
+                Text("内存")
+                    .frame(width: ProcessColumnLayout.memoryWidth, alignment: .trailing)
             }
+            .font(.caption2)
+            .foregroundStyle(.secondary)
             if store.snapshot.topProcesses.isEmpty {
                 Text("等待下一次采样…")
                     .font(.caption)
@@ -226,10 +231,11 @@ struct DashboardView: View {
                         Text("\(process.cpuPercent, specifier: "%.1f")%")
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
+                            .frame(width: ProcessColumnLayout.cpuWidth, alignment: .trailing)
                         Text(ByteFormatter.string(process.memoryBytes))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
-                            .frame(width: 64, alignment: .trailing)
+                            .frame(width: ProcessColumnLayout.memoryWidth, alignment: .trailing)
                     }
                     .font(.caption)
                 }
@@ -303,6 +309,11 @@ struct DashboardView: View {
     private func percent(_ value: Double) -> String {
         String(format: "%.0f%%", value)
     }
+}
+
+private enum ProcessColumnLayout {
+    static let cpuWidth: CGFloat = 42
+    static let memoryWidth: CGFloat = 64
 }
 
 private struct FanCard: View {
@@ -487,11 +498,10 @@ private struct HistoryCard: View {
             }
             .chartYAxis {
                 AxisMarks(position: .leading, values: [0, 25, 50, 75, 100]) { value in
-                    AxisTick().foregroundStyle(.orange.opacity(0.40))
+                    AxisTick().foregroundStyle(.secondary.opacity(0.35))
                     AxisValueLabel {
                         if let number = value.as(Int.self) {
                             Text("\(number)°")
-                                .foregroundStyle(.orange)
                         }
                     }
                 }
