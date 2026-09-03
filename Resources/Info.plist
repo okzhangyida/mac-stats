@@ -12,7 +12,7 @@
     <key>CFBundleExecutable</key>
     <string>MacStats</string>
     <key>CFBundleIdentifier</key>
-    <string>com.local.MacStats.rollback03</string>
+    <string>cc.macstats.app</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon.icns</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -24,9 +24,11 @@
     <key>CFBundleShortVersionString</key>
     <string>1.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>17</string>
+	<string>31</string>
+	<key>MacStatsAnalyticsEndpoint</key>
+	<string></string>
 	<key>NSHumanReadableCopyright</key>
-	<string>Copyright © 2026 Mac Stats. All rights reserved.</string>
+	<string>Copyright © 2026 Zhang Yida.</string>
     <key>LSMinimumSystemVersion</key>
     <string>13.0</string>
     <key>LSUIElement</key>

@@ -4,3 +4,4 @@ dist/
 *.xcuserstate
 .pnpm-store/
 website/
+TestReports/

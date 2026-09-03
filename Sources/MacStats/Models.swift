@@ -154,10 +154,27 @@ enum DisplayMetric: String, CaseIterable, Identifiable {
         case .memory: "memorychip"
         case .disk: "internaldrive"
         case .network: "arrow.up.arrow.down"
-        case .battery: "battery.75percent"
+        case .battery: CompatibleSymbol.battery
         case .temperature: "thermometer.medium"
-        case .fan: "fan"
+        case .fan: CompatibleSymbol.fan
         }
+    }
+}
+
+enum CompatibleSymbol {
+    static var battery: String {
+        if #available(macOS 14.0, *) { return "battery.75percent" }
+        return "battery.75"
+    }
+
+    static var batteryCharging: String {
+        if #available(macOS 14.0, *) { return "battery.100percent.bolt" }
+        return "battery.100.bolt"
+    }
+
+    static var fan: String {
+        if #available(macOS 14.0, *) { return "fan" }
+        return "wind"
     }
 }
 

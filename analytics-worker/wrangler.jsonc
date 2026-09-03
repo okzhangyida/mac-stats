@@ -1,0 +1,15 @@
+{
+  "$schema": "../website/node_modules/wrangler/config-schema.json",
+  "name": "mac-stats-usage",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-29",
+  "analytics_engine_datasets": [
+    {
+      "binding": "USAGE",
+      "dataset": "mac_stats_usage"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  }
+}

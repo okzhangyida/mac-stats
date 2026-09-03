@@ -5,7 +5,7 @@ import SwiftUI
 
 @MainActor
 final class StatusBarController: NSObject {
-    private static let logger = Logger(subsystem: "com.local.MacStats", category: "StatusBar")
+    private static let logger = Logger(subsystem: "cc.macstats.app", category: "StatusBar")
 
     private let store: MonitorStore
     private var statusItem: NSStatusItem?
@@ -84,6 +84,7 @@ final class StatusBarController: NSObject {
     private func updateStatusItem() {
         guard let statusItem, let button = statusItem.button else { return }
         let title = selectedMetrics.map(metricText).joined(separator: " ")
+        button.attributedTitle = NSAttributedString(string: "")
         button.title = usesIconOnlyFallback || title.isEmpty ? "" : " \(title)"
         button.setAccessibilityLabel(accessibilityMenuLabel)
 

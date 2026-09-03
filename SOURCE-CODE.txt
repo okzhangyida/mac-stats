@@ -1,0 +1,6 @@
+Mac Stats source code
+
+https://github.com/okzhangyida/mac-stats
+
+Mac Stats is free software licensed under the GNU General Public License,
+version 3 or (at your option) any later version (GPL-3.0-or-later).

@@ -196,7 +196,7 @@ struct DashboardView: View {
                     value: store.snapshot.batteryPercent.map(percent)
                         ?? L10n.string("dashboard.desktop_device", fallback: "Desktop Mac"),
                     detail: batteryDetail,
-                    icon: store.snapshot.batteryCharging ? "battery.100percent.bolt" : "battery.75percent",
+                    icon: store.snapshot.batteryCharging ? CompatibleSymbol.batteryCharging : CompatibleSymbol.battery,
                     color: .green,
                     progress: (store.snapshot.batteryPercent ?? 0) / 100
                 )
@@ -353,7 +353,7 @@ private struct FanCard: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             HStack {
-                Label(L10n.string("common.fan", fallback: "Fan"), systemImage: "fan")
+                Label(L10n.string("common.fan", fallback: "Fan"), systemImage: CompatibleSymbol.fan)
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Spacer()
@@ -388,11 +388,11 @@ private struct FanCard: View {
                 }
             }
         case .fanless:
-            Label(L10n.string("fan.fanless", fallback: "Fanless design"), systemImage: "fan")
+            Label(L10n.string("fan.fanless", fallback: "Fanless design"), systemImage: CompatibleSymbol.fan)
                 .font(.system(.body, design: .rounded).weight(.semibold))
                 .foregroundStyle(.secondary)
         default:
-            Label(L10n.string("common.unavailable", fallback: "Unavailable"), systemImage: "fan")
+            Label(L10n.string("common.unavailable", fallback: "Unavailable"), systemImage: CompatibleSymbol.fan)
                 .font(.system(.body, design: .rounded).weight(.semibold))
                 .foregroundStyle(.secondary)
         }
@@ -401,7 +401,7 @@ private struct FanCard: View {
     private func fanReading(_ fan: FanMetric, label: String?) -> some View {
         VStack(spacing: 2) {
             HStack(spacing: 3) {
-                Image(systemName: "fan")
+                Image(systemName: CompatibleSymbol.fan)
                     .font(.caption)
                     .foregroundStyle(.cyan)
                 if let label {

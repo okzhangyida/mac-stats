@@ -1,0 +1,60 @@
+name: Bug report
+description: Report a reproducible problem in Mac Stats
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for helping improve Mac Stats. Before submitting, please check that the problem still occurs in the latest release.
+  - type: input
+    id: version
+    attributes:
+      label: Mac Stats version
+      placeholder: "1.0.0 (31)"
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      placeholder: "macOS 15.6"
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Mac model
+      placeholder: "MacBook Pro with Apple M5 Pro"
+    validations:
+      required: true
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: Describe the problem and what you expected instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Open…
+        2. Enable…
+        3. See…
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Additional information
+      description: Add screenshots or crash details if useful. Remove passwords, tokens, personal paths, and other sensitive information first.
+      render: shell
+*** Add File: .github/ISSUE_TEMPLATE/config.yml
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: mailto:security@macstats.cc
+    about: Please report security issues privately instead of opening a public issue.

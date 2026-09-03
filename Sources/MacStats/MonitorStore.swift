@@ -87,7 +87,8 @@ final class MonitorStore: ObservableObject {
 
     private func installTimer() {
         timer = Timer.scheduledTimer(withTimeInterval: max(1, refreshInterval), repeats: true) { [weak self] _ in
-            Task { @MainActor in self?.sampleNow() }
+            guard let store = self else { return }
+            Task { @MainActor in store.sampleNow() }
         }
         if let timer {
             RunLoop.main.add(timer, forMode: .common)

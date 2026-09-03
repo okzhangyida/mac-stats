@@ -3,6 +3,7 @@ import SwiftUI
 
 @main
 struct MacStatsApp: App {
+    private let didMigratePreferences = PreferencesMigration.run()
     @StateObject private var store = MonitorStore()
     @AppStorage("displayMetrics") private var displayMetrics = "cpu,memory"
     @AppStorage("appAppearance") private var appAppearance = AppAppearance.system.rawValue
@@ -29,6 +30,8 @@ struct MacStatsApp: App {
             .onAppear {
                 AppAppearance.apply(appAppearance)
                 store.start()
+                DesktopAppearanceController.shared.start()
+                UsageAnalytics.shared.start()
             }
             .onChange(of: appAppearance) { newValue in
                 AppAppearance.apply(newValue)
@@ -38,17 +41,13 @@ struct MacStatsApp: App {
 
         Settings {
             SettingsView(store: store)
-                .frame(width: 470, height: 500)
+                .frame(width: 500, height: 650)
         }
 
         Window(L10n.string("process.window_title", fallback: "All Processes"), id: "processes") {
             ProcessListView(store: store)
         }
         .defaultSize(width: 920, height: 620)
-    }
-
-    private var menuTitle: String {
-        selectedMetrics.map(metricText).joined(separator: " · ")
     }
 
     private var selectedMetrics: [DisplayMetric] {
@@ -58,6 +57,10 @@ struct MacStatsApp: App {
                 .compactMap { DisplayMetric(rawValue: String($0)) }
                 .prefix(2)
         )
+    }
+
+    private var menuTitle: String {
+        selectedMetrics.map(metricText).joined(separator: " · ")
     }
 
     private func metricText(_ metric: DisplayMetric) -> String {

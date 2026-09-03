@@ -10,8 +10,10 @@ STAGING_DIR="$(mktemp -d /tmp/mac-stats-dmg.XXXXXX)"
 trap 'rm -rf "$STAGING_DIR"' EXIT
 
 ditto "$APP_DIR" "$STAGING_DIR/Mac Stats.app"
+ditto "$PROJECT_DIR/LICENSE" "$STAGING_DIR/LICENSE.txt"
+ditto "$PROJECT_DIR/SOURCE-CODE.txt" "$STAGING_DIR/SOURCE-CODE.txt"
 ln -s /Applications "$STAGING_DIR/Applications"
 hdiutil create -quiet -volname "Mac Stats" -srcfolder "$STAGING_DIR" -ov -format UDZO "$DMG_PATH"
-hdiutil verify "$DMG_PATH"
+hdiutil verify "$DMG_PATH" >&2
 shasum -a 256 "$DMG_PATH" > "$DMG_PATH.sha256"
 echo "$DMG_PATH"

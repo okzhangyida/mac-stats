@@ -1,12 +1,13 @@
 #!/bin/zsh
 set -euo pipefail
 
-: "${MAC_STATS_BUNDLE_ID:?Set MAC_STATS_BUNDLE_ID to the permanent reverse-DNS bundle identifier.}"
 : "${DEVELOPER_ID_APPLICATION:?Set DEVELOPER_ID_APPLICATION to the full Developer ID Application certificate name.}"
 : "${NOTARY_PROFILE:?Set NOTARY_PROFILE to a notarytool keychain profile.}"
 
 PROJECT_DIR="${0:A:h:h}"
+MAC_STATS_BUNDLE_ID="${MAC_STATS_BUNDLE_ID:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PROJECT_DIR/Resources/Info.plist")}"
 export CODE_SIGN_IDENTITY="$DEVELOPER_ID_APPLICATION"
+export MAC_STATS_BUNDLE_ID
 export MAC_STATS_PACKAGE_LABEL="candidate"
 
 "$PROJECT_DIR/Scripts/build-universal.sh"

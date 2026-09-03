@@ -14,8 +14,8 @@ final class SettingsWindowCoordinator {
             let hostingController = NSHostingController(rootView: SettingsView(store: store))
             let window = NSWindow(contentViewController: hostingController)
             window.title = L10n.string("settings.window_title", fallback: "Mac Stats Settings")
-            window.setContentSize(NSSize(width: 470, height: 500))
-            window.minSize = NSSize(width: 470, height: 500)
+            window.setContentSize(NSSize(width: 500, height: 650))
+            window.minSize = NSSize(width: 500, height: 560)
             window.styleMask = [.titled, .closable, .miniaturizable]
             window.isReleasedWhenClosed = false
             window.center()
