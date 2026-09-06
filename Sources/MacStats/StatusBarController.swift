@@ -5,7 +5,7 @@ import SwiftUI
 
 @MainActor
 final class StatusBarController: NSObject {
-    private static let logger = Logger(subsystem: "cc.macstats.app", category: "StatusBar")
+    private static let logger = Logger(subsystem: "ai.justbro.macstats", category: "StatusBar")
 
     private let store: MonitorStore
     private var statusItem: NSStatusItem?

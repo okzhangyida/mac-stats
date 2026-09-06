@@ -1,10 +1,11 @@
 import Foundation
 
 enum PreferencesMigration {
-    static let permanentDomain = "cc.macstats.app"
+    static let permanentDomain = "ai.justbro.macstats"
 
     private static let migrationMarker = "preferences.migratedToPermanentBundleID.v1"
     private static let legacyDomains = [
+        "cc.macstats.app",
         "com.local.MacStats.rollback03",
         "com.local.MacStats"
     ]

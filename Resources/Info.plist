@@ -12,7 +12,7 @@
     <key>CFBundleExecutable</key>
     <string>MacStats</string>
     <key>CFBundleIdentifier</key>
-    <string>cc.macstats.app</string>
+    <string>ai.justbro.macstats</string>
     <key>CFBundleIconFile</key>
     <string>AppIcon.icns</string>
     <key>CFBundleInfoDictionaryVersion</key>
@@ -24,7 +24,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>32</string>
+	<string>33</string>
 	<key>MacStatsAnalyticsEndpoint</key>
 	<string></string>
 	<key>NSHumanReadableCopyright</key>
