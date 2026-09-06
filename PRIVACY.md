@@ -36,4 +36,4 @@ Live samples are held in memory only as needed to render the interface. Preferen
 
 If a future version changes its data practices, this policy and the release notes will be updated before that version is distributed.
 
-Publisher: Zhang Yida. Privacy and product questions may be sent to support@macstats.cc. Security reports should be sent to security@macstats.cc.
+Publisher: Zhang Yida. Privacy and product questions may be sent to support@justbro.ai. Security reports should be sent to support@justbro.ai.

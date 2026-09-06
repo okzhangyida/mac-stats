@@ -53,7 +53,7 @@
 "dashboard.top_processes" = "高占用进程";
 "dashboard.waiting_sample" = "等待下一次采样…";
 "dashboard.view_all" = "查看全部";
-"dashboard.uptime" = "运行 %@";
+"dashboard.uptime" = "系统已运行 %@";
 "dashboard.no_battery" = "未检测到电池";
 "dashboard.power_connected" = "已接入电源";
 "dashboard.on_battery" = "正在使用电池";
@@ -138,3 +138,5 @@
 "status.battery_percent" = "电池 %.0f%%";
 "status.temperature_value" = "温度 %.0f 摄氏度";
 "status.temperature_unavailable" = "温度不可读取";
+"process.cpu_help" = "占整机 CPU 总算力的比例，所有逻辑核心合计为 100%。";
+"process.coverage" = "包含可读取的系统服务；kernel_task 等部分受保护进程可能无法读取。CPU 百分比按整机总算力计算。";

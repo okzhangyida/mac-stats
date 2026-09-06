@@ -62,6 +62,12 @@ struct ProcessListView: View {
 
             Divider()
 
+            Text(L10n.string("process.coverage", fallback: "Includes readable system services. Some protected processes, including kernel_task, may be unavailable. CPU values are shares of total CPU capacity."))
+                .font(.caption)
+                .foregroundStyle(.secondary)
+                .padding(.horizontal, 16)
+                .padding(.vertical, 8)
+
             Table(filteredProcesses) {
                 TableColumn(L10n.string("process.column_process", fallback: "Process")) { process in
                     VStack(alignment: .leading, spacing: 2) {
@@ -83,6 +89,7 @@ struct ProcessListView: View {
                 TableColumn(L10n.string("common.cpu", fallback: "CPU")) { process in
                     Text("\(process.cpuPercent, specifier: "%.1f")%")
                         .monospacedDigit()
+                        .help(L10n.string("process.cpu_help", fallback: "Share of total CPU capacity. All logical cores combined equal 100%."))
                 }
                 .width(58)
 
@@ -144,7 +151,7 @@ struct ProcessListView: View {
         return filtered.sorted { lhs, rhs in
             switch sortOption {
             case .cpu:
-                if abs(lhs.cpuPercent - rhs.cpuPercent) > 0.01 { return lhs.cpuPercent > rhs.cpuPercent }
+                if lhs.cpuPercent != rhs.cpuPercent { return lhs.cpuPercent > rhs.cpuPercent }
                 return lhs.memoryBytes > rhs.memoryBytes
             case .memory:
                 if lhs.memoryBytes != rhs.memoryBytes { return lhs.memoryBytes > rhs.memoryBytes }

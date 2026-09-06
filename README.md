@@ -50,7 +50,7 @@ open "dist/Mac Stats.app"
 签名和公证，仅适合开发与本机使用。
 
 公开构建可通过 `MAC_STATS_ANALYTICS_ENDPOINT` 注入自有统计服务地址；未设置时应用
-不会发送任何统计请求。正式服务地址为 `https://usage.macstats.cc/v1/events`，接收服务与部署说明位于 `analytics-worker/`。
+不会发送任何统计请求。正式服务地址为 `https://macstats-api.justbro.ai/v1/events`，接收服务与部署说明位于 `analytics-worker/`。
 
 ## 发布准备
 
@@ -77,9 +77,9 @@ NOTARY_PROFILE="你的notarytool配置名" \
 ## 开发者与许可
 
 - 开发者：Zhang Yida
-- 官网：[macstats.cc](https://macstats.cc)
-- 使用支持：[support@macstats.cc](mailto:support@macstats.cc)
-- 安全问题：[security@macstats.cc](mailto:security@macstats.cc)
+- 官网：[macstats.justbro.ai](https://macstats.justbro.ai)
+- 使用支持：[support@justbro.ai](mailto:support@justbro.ai)
+- 安全问题：[support@justbro.ai](mailto:support@justbro.ai)
 - 源代码采用 [GNU General Public License v3.0 or later](LICENSE) 发布（SPDX：`GPL-3.0-or-later`）
 
 隐私与安全说明分别见 [PRIVACY.md](PRIVACY.md) 和 [SECURITY.md](SECURITY.md)。

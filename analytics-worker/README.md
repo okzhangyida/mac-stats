@@ -14,7 +14,7 @@ pnpm exec wrangler deploy --config ../analytics-worker/wrangler.jsonc
 Use the resulting HTTPS URL plus `/v1/events` as `MAC_STATS_ANALYTICS_ENDPOINT` when building the app:
 
 ```sh
-MAC_STATS_ANALYTICS_ENDPOINT="https://usage.macstats.cc/v1/events" ./Scripts/build-app.sh
+MAC_STATS_ANALYTICS_ENDPOINT="https://macstats-api.justbro.ai/v1/events" ./Scripts/build-app.sh
 ```
 
 The endpoint is public by design because a value embedded in a desktop app cannot be a secret. Payload validation limits accidental or malformed writes, but public aggregate counters should always be treated as approximate.

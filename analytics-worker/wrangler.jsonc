@@ -1,6 +1,7 @@
 {
   "$schema": "../website/node_modules/wrangler/config-schema.json",
   "name": "mac-stats-usage",
+  "routes": [{ "pattern": "macstats-api.justbro.ai", "custom_domain": true }],
   "main": "src/index.ts",
   "compatibility_date": "2026-08-29",
   "analytics_engine_datasets": [

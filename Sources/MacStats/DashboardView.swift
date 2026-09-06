@@ -242,6 +242,7 @@ struct DashboardView: View {
                         Text(process.displayName).lineLimit(1)
                         Spacer()
                         Text("\(process.cpuPercent, specifier: "%.1f")%")
+                            .help(L10n.string("process.cpu_help", fallback: "Share of total CPU capacity. All logical cores combined equal 100%."))
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
                             .frame(width: ProcessColumnLayout.cpuWidth, alignment: .trailing)
@@ -274,7 +275,7 @@ struct DashboardView: View {
 
     private var systemFooter: some View {
         HStack {
-            Label(L10n.string("dashboard.uptime", fallback: "Up %@", uptimeText), systemImage: "clock")
+            Label(L10n.string("dashboard.uptime", fallback: "System uptime: %@", uptimeText), systemImage: "clock")
             Spacer()
             Text(ProcessInfo.processInfo.operatingSystemVersionString)
                 .lineLimit(1)

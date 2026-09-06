@@ -4,6 +4,44 @@ import Foundation
 import IOKit.ps
 import SensorBridge
 
+struct ProcessFallbackReading {
+    let pid: Int32
+    let seconds: Double
+    let memory: UInt64
+    let name: String
+
+    init?(line: Substring) {
+        let fields = line.split(maxSplits: 3, omittingEmptySubsequences: true, whereSeparator: { $0.isWhitespace })
+        guard fields.count == 4, let pid = Int32(fields[0]), let memoryKB = UInt64(fields[2]) else { return nil }
+        let dayParts = fields[1].split(separator: "-")
+        guard dayParts.count <= 2, let clock = dayParts.last else { return nil }
+        let parts = clock.split(separator: ":").compactMap { Double($0) }
+        guard (2...3).contains(parts.count), parts.count == clock.split(separator: ":").count else { return nil }
+        let days = dayParts.count == 2 ? Double(dayParts[0]) : 0
+        guard let days, days >= 0, parts.allSatisfy({ $0.isFinite && $0 >= 0 }), memoryKB <= UInt64.max / 1024 else { return nil }
+        self.pid = pid
+        seconds = days * 86400 + parts.reduce(0) { $0 * 60 + $1 }
+        memory = memoryKB * 1024
+        name = String(fields[3])
+    }
+}
+
+/// PROC_PIDTASKINFO reports Mach absolute-time ticks, not nanoseconds.
+struct ProcessCPUAccounting {
+    let nanosecondsPerTick: Double
+
+    init(numerator: UInt32, denominator: UInt32) {
+        nanosecondsPerTick = Double(numerator) / Double(max(1, denominator))
+    }
+
+    func percent(previous: UInt64?, current: UInt64, elapsedTicks: UInt64, logicalCPUs: Int) -> Double {
+        guard let previous, current >= previous, elapsedTicks > 0 else { return 0 }
+        let cpuSeconds = Double(current - previous) * nanosecondsPerTick / 1_000_000_000
+        let elapsedSeconds = Double(elapsedTicks) * nanosecondsPerTick / 1_000_000_000
+        return min(100, cpuSeconds / elapsedSeconds / Double(max(1, logicalCPUs)) * 100)
+    }
+}
+
 final class SystemMonitor: @unchecked Sendable {
     private struct SensorReading {
         let averageTemperature: Double?
@@ -18,6 +56,14 @@ final class SystemMonitor: @unchecked Sendable {
     private var previousNetwork: (received: UInt64, sent: UInt64, date: Date)?
     private var previousDisk: (read: UInt64, written: UInt64, date: Date)?
     private var previousProcessTimes: [Int32: UInt64] = [:]
+    private var lastProcessSampleTicks: UInt64?
+    private var previousFallbackTimes: [Int32: Double] = [:]
+    private var lastFallbackSampleTicks: UInt64?
+    private let processCPUAccounting: ProcessCPUAccounting = {
+        var timebase = mach_timebase_info_data_t()
+        mach_timebase_info(&timebase)
+        return ProcessCPUAccounting(numerator: timebase.numer, denominator: timebase.denom)
+    }()
     private var applicationNameCache: [String: String] = [:]
     private var cachedSensors: SensorReading?
     private var lastSensorSampleDate: Date?
@@ -56,7 +102,7 @@ final class SystemMonitor: @unchecked Sendable {
             fanAvailability: sensors.fanAvailability,
             fans: sensors.fans,
             uptime: ProcessInfo.processInfo.systemUptime,
-            allProcesses: includeProcesses ? processUsage(at: now) : [],
+            allProcesses: includeProcesses ? processUsage() : [],
             sampledAt: now
         )
     }
@@ -350,8 +396,9 @@ final class SystemMonitor: @unchecked Sendable {
         return (cycles, condition)
     }
 
-    private func processUsage(at date: Date) -> [ProcessMetric] {
-        let capacity = max(1, Int(proc_listallpids(nil, 0)))
+    private func processUsage() -> [ProcessMetric] {
+        let sampleTicks = mach_absolute_time()
+        let capacity = max(1, Int(proc_listallpids(nil, 0)) + 128)
         var pids = [pid_t](repeating: 0, count: capacity)
         let byteCount = Int32(capacity * MemoryLayout<pid_t>.stride)
         let count = Int(proc_listallpids(&pids, byteCount))
@@ -360,26 +407,29 @@ final class SystemMonitor: @unchecked Sendable {
         var currentTimes: [Int32: UInt64] = [:]
         var results: [ProcessMetric] = []
         let logicalCPUs = max(1, ProcessInfo.processInfo.processorCount)
+        let elapsedTicks = lastProcessSampleTicks.map { delta(sampleTicks, $0) } ?? 0
 
-        for pid in pids.prefix(count) where pid > 0 {
+        var unreadablePIDs = Set<Int32>()
+        for pid in pids.prefix(count) where pid >= 0 {
             var task = proc_taskinfo()
             let size = Int32(MemoryLayout<proc_taskinfo>.stride)
             let read = withUnsafeMutablePointer(to: &task) {
                 proc_pidinfo(pid, PROC_PIDTASKINFO, 0, $0, size)
             }
-            guard read == size else { continue }
+            guard read == size else { unreadablePIDs.insert(pid); continue }
 
             let totalTime = task.pti_total_user + task.pti_total_system
             currentTimes[pid] = totalTime
-            let elapsed = max(0.1, date.timeIntervalSince1970 - (lastProcessSampleDate ?? date).timeIntervalSince1970)
-            let oldTime = previousProcessTimes[pid] ?? totalTime
-            let cpu = min(100, Double(delta(totalTime, oldTime)) / 1_000_000_000 / elapsed / Double(logicalCPUs) * 100)
+            let cpu = processCPUAccounting.percent(
+                previous: previousProcessTimes[pid], current: totalTime,
+                elapsedTicks: elapsedTicks, logicalCPUs: logicalCPUs
+            )
 
             var nameBuffer = [CChar](repeating: 0, count: Int(MAXPATHLEN))
             proc_name(pid, &nameBuffer, UInt32(nameBuffer.count))
             let nameBytes = nameBuffer.prefix { $0 != 0 }.map { UInt8(bitPattern: $0) }
-            let name = String(decoding: nameBytes, as: UTF8.self)
-            guard !name.isEmpty else { continue }
+            let rawName = String(decoding: nameBytes, as: UTF8.self)
+            let name = rawName.isEmpty ? (pid == 0 ? "kernel_task" : "PID \(pid)") : rawName
 
             var pathBuffer = [CChar](repeating: 0, count: 4 * Int(MAXPATHLEN))
             let pathLength = proc_pidpath(pid, &pathBuffer, UInt32(pathBuffer.count))
@@ -405,10 +455,32 @@ final class SystemMonitor: @unchecked Sendable {
             ))
         }
 
+        // ps can read cumulative CPU time through a different public system
+        // interface for services whose PROC_PIDTASKINFO access is denied.
+        if !unreadablePIDs.isEmpty {
+            let fallbackTicks = mach_absolute_time()
+            let elapsed = lastFallbackSampleTicks.map {
+                Double(delta(fallbackTicks, $0)) * processCPUAccounting.nanosecondsPerTick / 1_000_000_000
+            } ?? 0
+            var fallbackTimes: [Int32: Double] = [:]
+            for reading in fallbackProcessReadings() where unreadablePIDs.contains(reading.pid) {
+                fallbackTimes[reading.pid] = reading.seconds
+                let old = previousFallbackTimes[reading.pid] ?? reading.seconds
+                let cpu = elapsed > 0 ? min(100, max(0, reading.seconds - old) / elapsed / Double(logicalCPUs) * 100) : 0
+                results.append(ProcessMetric(pid: reading.pid, name: reading.name,
+                    applicationName: presetApplicationName(for: reading.name), executablePath: "",
+                    cpuPercent: cpu, memoryBytes: reading.memory))
+            }
+            previousFallbackTimes = fallbackTimes
+            lastFallbackSampleTicks = fallbackTicks
+        } else {
+            previousFallbackTimes = [:]
+            lastFallbackSampleTicks = nil
+        }
         previousProcessTimes = currentTimes
-        lastProcessSampleDate = date
+        lastProcessSampleTicks = sampleTicks
         return results.sorted {
-            if abs($0.cpuPercent - $1.cpuPercent) > 0.1 { return $0.cpuPercent > $1.cpuPercent }
+            if $0.cpuPercent != $1.cpuPercent { return $0.cpuPercent > $1.cpuPercent }
             return $0.memoryBytes > $1.memoryBytes
         }
     }
@@ -431,6 +503,21 @@ final class SystemMonitor: @unchecked Sendable {
         }
 
         return presetApplicationName(for: processName)
+    }
+
+    private func fallbackProcessReadings() -> [ProcessFallbackReading] {
+        let process = Process()
+        let output = Pipe()
+        process.executableURL = URL(fileURLWithPath: "/bin/ps")
+        process.arguments = ["-A", "-c", "-o", "pid=,time=,rss=,comm="]
+        process.environment = ["LC_ALL": "C", "PATH": "/usr/bin:/bin:/usr/sbin:/sbin"]
+        process.standardOutput = output
+        process.standardError = FileHandle.nullDevice
+        do { try process.run() } catch { return [] }
+        let data = output.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { return [] }
+        return String(decoding: data, as: UTF8.self).split(separator: "\n").compactMap { ProcessFallbackReading(line: $0) }
     }
 
     private func outermostApplicationBundle(in executablePath: String) -> String? {
@@ -472,8 +559,6 @@ final class SystemMonitor: @unchecked Sendable {
         if key.contains("codex") && key.contains("renderer") { return "Codex" }
         return nil
     }
-
-    private var lastProcessSampleDate: Date?
 
     private func delta(_ new: UInt64, _ old: UInt64) -> UInt64 {
         new >= old ? new - old : 0

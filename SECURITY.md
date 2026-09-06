@@ -15,8 +15,8 @@ Security fixes are provided for the latest published version of Mac Stats.
 
 ## Reporting a vulnerability
 
-Do not publish an unpatched vulnerability. Report it privately to [security@macstats.cc](mailto:security@macstats.cc).
+Do not publish an unpatched vulnerability. Report it privately to [support@justbro.ai](mailto:support@justbro.ai).
 
 Include the affected Mac model, macOS version, Mac Stats version, reproduction steps, and any crash report with secrets removed.
 
-For ordinary product questions, use [support@macstats.cc](mailto:support@macstats.cc).
+For ordinary product questions, use [support@justbro.ai](mailto:support@justbro.ai).

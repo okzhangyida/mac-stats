@@ -53,7 +53,7 @@
 "dashboard.top_processes" = "Top Processes";
 "dashboard.waiting_sample" = "Waiting for the next sample…";
 "dashboard.view_all" = "View All";
-"dashboard.uptime" = "Up %@";
+"dashboard.uptime" = "System uptime: %@";
 "dashboard.no_battery" = "No battery detected";
 "dashboard.power_connected" = "Power connected";
 "dashboard.on_battery" = "On battery";
@@ -138,3 +138,5 @@
 "status.battery_percent" = "Battery %.0f%%";
 "status.temperature_value" = "Temperature %.0f degrees Celsius";
 "status.temperature_unavailable" = "Temperature unavailable";
+"process.cpu_help" = "Share of total CPU capacity. All logical cores combined equal 100%.";
+"process.coverage" = "Includes readable system services. Some protected processes, including kernel_task, may be unavailable. CPU values are shares of total CPU capacity.";

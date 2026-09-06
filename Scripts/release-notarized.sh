@@ -8,6 +8,7 @@ PROJECT_DIR="${0:A:h:h}"
 MAC_STATS_BUNDLE_ID="${MAC_STATS_BUNDLE_ID:-$(/usr/libexec/PlistBuddy -c 'Print :CFBundleIdentifier' "$PROJECT_DIR/Resources/Info.plist")}"
 export CODE_SIGN_IDENTITY="$DEVELOPER_ID_APPLICATION"
 export MAC_STATS_BUNDLE_ID
+export MAC_STATS_ANALYTICS_ENDPOINT="${MAC_STATS_ANALYTICS_ENDPOINT:-https://macstats-api.justbro.ai/v1/events}"
 export MAC_STATS_PACKAGE_LABEL="candidate"
 
 "$PROJECT_DIR/Scripts/build-universal.sh"
