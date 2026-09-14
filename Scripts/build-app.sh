@@ -21,6 +21,7 @@ BIN_DIR="$(swift build -c "$CONFIGURATION" --show-bin-path)"
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$BIN_DIR/MacStats" "$APP_DIR/Contents/MacOS/MacStats"
 cp "$PROJECT_DIR/Resources/Info.plist" "$APP_DIR/Contents/Info.plist"
+"$PROJECT_DIR/Scripts/apply-build-number.sh" "$APP_DIR/Contents/Info.plist"
 if [[ -n "${MAC_STATS_ANALYTICS_ENDPOINT:-}" ]]; then
     /usr/libexec/PlistBuddy -c "Set :MacStatsAnalyticsEndpoint $MAC_STATS_ANALYTICS_ENDPOINT" "$APP_DIR/Contents/Info.plist"
 fi

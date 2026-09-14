@@ -4,8 +4,9 @@ set -euo pipefail
 PROJECT_DIR="${0:A:h:h}"
 APP_DIR="${1:-$PROJECT_DIR/dist/Mac Stats.app}"
 VERSION="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' "$APP_DIR/Contents/Info.plist")"
+BUILD="$(/usr/libexec/PlistBuddy -c 'Print :MacStatsBuildNumber' "$APP_DIR/Contents/Info.plist")"
 LABEL="${MAC_STATS_PACKAGE_LABEL:-UNNOTARIZED}"
-DMG_PATH="$PROJECT_DIR/dist/Mac-Stats-${VERSION}-${LABEL}-universal.dmg"
+DMG_PATH="$PROJECT_DIR/dist/Mac-Stats-${VERSION}-build-${BUILD}-${LABEL}-universal.dmg"
 STAGING_DIR="$(mktemp -d /tmp/mac-stats-dmg.XXXXXX)"
 trap 'rm -rf "$STAGING_DIR"' EXIT
 

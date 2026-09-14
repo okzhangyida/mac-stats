@@ -1,0 +1,31 @@
+{
+  "allocations" : [
+    {
+      "allocatedAt" : "2026-09-14T09:33:09+08:00",
+      "build" : "20260914.01",
+      "platformMappings" : {
+        "macOSCFBundleVersion" : "2609.14.1"
+      },
+      "productVersion" : "1.0.0",
+      "purpose" : "Fix inactive dashboard progress colors and long-running performance"
+    }
+  ],
+  "current" : {
+    "allocatedAt" : "2026-09-14T09:33:09+08:00",
+    "build" : "20260914.01",
+    "platformMappings" : {
+      "macOSCFBundleVersion" : "2609.14.1"
+    },
+    "productVersion" : "1.0.0",
+    "purpose" : "Fix inactive dashboard progress colors and long-running performance"
+  },
+  "legacyBuilds" : [
+    {
+      "build" : "33",
+      "productVersion" : "1.0.0",
+      "releasedAt" : "2026-09-06T22:14:11+08:00"
+    }
+  ],
+  "project" : "Mac Stats",
+  "schemaVersion" : 1
+}

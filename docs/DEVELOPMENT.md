@@ -10,6 +10,15 @@ swift run MacStats
 
 ## 构建应用
 
+首次开始一个新的交付批次时，先按北京时间分配构建号；同一批次的重新构建不要重复分配：
+
+```bash
+./Scripts/allocate-build-number.swift 1.0.0 "本批次用途"
+```
+
+构建号以 `Build/build-numbers.json` 为唯一记录。对外使用 `YYYYMMDD.NN`，构建脚本会自动
+写入兼容 macOS 的 `CFBundleVersion` 映射。
+
 ```bash
 ./Scripts/build-app.sh
 open "dist/Mac Stats.app"
@@ -42,4 +51,3 @@ NOTARY_PROFILE="你的notarytool配置名" \
 
 正式脚本会生成 Universal 2 应用，启用 Hardened Runtime，签名 DMG，提交 Apple
 公证，装订公证票据，并执行 Gatekeeper 与 SHA-256 验证。
-

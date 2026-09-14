@@ -36,6 +36,7 @@ INTEL_BINARY="$(swift build -c release --triple x86_64-apple-macosx13.0 --scratc
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 lipo -create "$ARM_BINARY" "$INTEL_BINARY" -output "$APP_DIR/Contents/MacOS/MacStats"
 cp "$PLIST" "$APP_DIR/Contents/Info.plist"
+"$PROJECT_DIR/Scripts/apply-build-number.sh" "$APP_DIR/Contents/Info.plist"
 /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier $BUNDLE_IDENTIFIER" "$APP_DIR/Contents/Info.plist"
 if [[ -n "${MAC_STATS_ANALYTICS_ENDPOINT:-}" ]]; then
     /usr/libexec/PlistBuddy -c "Set :MacStatsAnalyticsEndpoint $MAC_STATS_ANALYTICS_ENDPOINT" "$APP_DIR/Contents/Info.plist"

@@ -4,14 +4,12 @@ import OSLog
 import SwiftUI
 
 @MainActor
-final class StatusBarController: NSObject {
+final class StatusBarController: NSObject, NSPopoverDelegate {
     private static let logger = Logger(subsystem: "ai.justbro.macstats", category: "StatusBar")
 
     private let store: MonitorStore
     private var statusItem: NSStatusItem?
     private let popover = NSPopover()
-    private var settingsWindowController: NSWindowController?
-    private var processWindowController: NSWindowController?
     private var cancellables = Set<AnyCancellable>()
     private var usesIconOnlyFallback = false
 
@@ -57,6 +55,11 @@ final class StatusBarController: NSObject {
         popover.behavior = .transient
         popover.animates = true
         popover.contentSize = NSSize(width: 390, height: 590)
+        popover.delegate = self
+    }
+
+    private func preparePopoverContent() {
+        guard popover.contentViewController == nil else { return }
         popover.contentViewController = NSHostingController(
             rootView: DashboardView(
                 store: store,
@@ -68,10 +71,10 @@ final class StatusBarController: NSObject {
     }
 
     private func observeChanges() {
-        store.objectWillChange
+        store.$snapshot
             .receive(on: RunLoop.main)
             .sink { [weak self] _ in
-                DispatchQueue.main.async { self?.updateStatusItem() }
+                self?.updateStatusItem()
             }
             .store(in: &cancellables)
 
@@ -82,8 +85,9 @@ final class StatusBarController: NSObject {
     }
 
     private func updateStatusItem() {
+        releaseHiddenPopoverContent()
         guard let statusItem, let button = statusItem.button else { return }
-        let title = selectedMetrics.map(metricText).joined(separator: " ")
+        let title = selectedMetrics.map(metricText).joined(separator: " · ")
         button.attributedTitle = NSAttributedString(string: "")
         button.title = usesIconOnlyFallback || title.isEmpty ? "" : " \(title)"
         button.setAccessibilityLabel(accessibilityMenuLabel)
@@ -99,9 +103,14 @@ final class StatusBarController: NSObject {
             let preferredWidth = contentWidth.isFinite && contentWidth > 0
                 ? ceil(contentWidth + 6)
                 : 28
-            statusItem.length = min(max(preferredWidth, 28), 164)
+            statusItem.length = min(max(preferredWidth, 28), 240)
         }
         statusItem.isVisible = true
+    }
+
+    private func releaseHiddenPopoverContent() {
+        guard !popover.isShown, popover.contentViewController != nil else { return }
+        popover.contentViewController = nil
     }
 
     private func verifyVisibility(of button: NSStatusBarButton?) {
@@ -130,43 +139,24 @@ final class StatusBarController: NSObject {
             ensureStatusItem()
             return
         }
+        preparePopoverContent()
         popover.show(relativeTo: button.bounds, of: button, preferredEdge: .minY)
+    }
+
+    func popoverDidClose(_ notification: Notification) {
+        // MonitorStore continues sampling and retaining the last two minutes.
+        // Only the hidden SwiftUI/Charts hierarchy is discarded here.
+        releaseHiddenPopoverContent()
     }
 
     private func showSettings() {
         popover.performClose(nil)
-        if settingsWindowController == nil {
-            let hostingController = NSHostingController(rootView: SettingsView(store: store))
-            let window = NSWindow(contentViewController: hostingController)
-            window.title = L10n.string("settings.window_title", fallback: "Mac Stats Settings")
-            window.setContentSize(NSSize(width: 470, height: 500))
-            window.minSize = NSSize(width: 470, height: 500)
-            window.styleMask = [.titled, .closable, .miniaturizable]
-            window.isReleasedWhenClosed = false
-            window.center()
-            settingsWindowController = NSWindowController(window: window)
-        }
-        settingsWindowController?.showWindow(nil)
-        settingsWindowController?.window?.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        SettingsWindowCoordinator.shared.show(store: store)
     }
 
     private func showProcesses() {
         popover.performClose(nil)
-        if processWindowController == nil {
-            let hostingController = NSHostingController(rootView: ProcessListView(store: store))
-            let window = NSWindow(contentViewController: hostingController)
-            window.title = L10n.string("process.window_title", fallback: "All Processes")
-            window.setContentSize(NSSize(width: 920, height: 620))
-            window.minSize = NSSize(width: 760, height: 480)
-            window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
-            window.isReleasedWhenClosed = false
-            window.center()
-            processWindowController = NSWindowController(window: window)
-        }
-        processWindowController?.showWindow(nil)
-        processWindowController?.window?.makeKeyAndOrderFront(nil)
-        NSApplication.shared.activate(ignoringOtherApps: true)
+        ProcessWindowCoordinator.shared.show(store: store)
     }
 
     private var selectedMetrics: [DisplayMetric] {
@@ -181,19 +171,32 @@ final class StatusBarController: NSObject {
     private func metricText(_ metric: DisplayMetric) -> String {
         switch metric {
         case .cpu:
-            return String(format: "C%.0f%%", store.snapshot.cpuPercent)
+            return String(format: "CPU %.0f%%", store.snapshot.cpuPercent)
         case .memory:
-            return String(format: "M%.0f%%", store.memoryPercent)
+            return L10n.string("status.memory_percent", fallback: "Memory %.0f%%", store.memoryPercent)
         case .disk:
-            return String(format: "D%.0f%%", store.diskPercent)
+            return L10n.string("status.disk_percent", fallback: "Disk %.0f%%", store.diskPercent)
         case .network:
-            return "↓\(ByteFormatter.compactRate(store.snapshot.networkDownPerSecond))↑\(ByteFormatter.compactRate(store.snapshot.networkUpPerSecond))"
+            return "↓\(ByteFormatter.compactRate(store.snapshot.networkDownPerSecond)) ↑\(ByteFormatter.compactRate(store.snapshot.networkUpPerSecond))"
         case .battery:
-            return store.snapshot.batteryPercent.map { String(format: "B%.0f%%", $0) } ?? "B—"
+            return store.snapshot.batteryPercent.map {
+                L10n.string("status.battery_percent", fallback: "Battery %.0f%%", $0)
+            } ?? "B —"
         case .temperature:
-            return store.snapshot.averageTemperature.map { String(format: "T%.0f°", $0) } ?? "T—"
+            return store.snapshot.averageTemperature.map { String(format: "%.0f°C", $0) }
+                ?? "\(L10n.string("common.temperature", fallback: "Temperature")) \(store.snapshot.thermalCondition.title)"
         case .fan:
-            return store.snapshot.fans.map(\.rpm).max().map { String(format: "F%.0f", $0) } ?? "F—"
+            switch store.snapshot.fanAvailability {
+            case .available:
+                if let fastest = store.snapshot.fans.map(\.rpm).max() {
+                    return L10n.string("fan.rpm_value", fallback: "Fan %.0f", fastest)
+                }
+                return L10n.string("fan.zero", fallback: "Fan 0")
+            case .fanless:
+                return L10n.string("fan.fanless", fallback: "Fanless design")
+            case .unavailable:
+                return "\(L10n.string("common.fan", fallback: "Fan")) —"
+            }
         }
     }
 
@@ -236,12 +239,10 @@ final class StatusBarController: NSObject {
     }
 
     private var menuBarIcon: NSImage {
-        // Prefer an SF Symbol so macOS always supplies a correctly tinted,
-        // Retina-ready template image. Keep the bundled asset as a fallback.
-        let image = NSImage(systemSymbolName: "gauge.medium", accessibilityDescription: "Mac Stats")
+        let image = Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png")
+            .flatMap(NSImage.init(contentsOf:))
+            ?? NSImage(systemSymbolName: "gauge.open.with.lines.needle.33percent", accessibilityDescription: "Mac Stats")
             ?? NSImage(systemSymbolName: "gauge", accessibilityDescription: "Mac Stats")
-            ?? Bundle.main.url(forResource: "MenuBarIcon", withExtension: "png")
-                .flatMap(NSImage.init(contentsOf:))
             ?? NSImage(size: NSSize(width: 18, height: 18))
         image.isTemplate = true
         image.size = NSSize(width: 18, height: 18)

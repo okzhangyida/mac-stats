@@ -5,6 +5,25 @@ import XCTest
 
 final class ViewRenderingTests: XCTestCase {
     @MainActor
+    func testMetricProgressBarKeepsItsColorWithoutAnActiveWindow() throws {
+        let size = NSSize(width: 100, height: 4)
+        let view = NSHostingView(
+            rootView: MetricProgressBar(progress: 0.75, color: .blue)
+                .frame(width: size.width, height: size.height)
+        )
+        view.appearance = NSAppearance(named: .aqua)
+        view.frame = NSRect(origin: .zero, size: size)
+        view.layoutSubtreeIfNeeded()
+
+        let representation = try XCTUnwrap(view.bitmapImageRepForCachingDisplay(in: view.bounds))
+        view.cacheDisplay(in: view.bounds, to: representation)
+        let sampled = try XCTUnwrap(representation.colorAt(x: 25, y: 2)?.usingColorSpace(.deviceRGB))
+
+        XCTAssertGreaterThan(sampled.blueComponent, sampled.redComponent + 0.25)
+        XCTAssertGreaterThan(sampled.blueComponent, sampled.greenComponent + 0.1)
+    }
+
+    @MainActor
     func testDashboardAndSettingsRenderInLightAndDarkModes() throws {
         let store = MonitorStore()
 

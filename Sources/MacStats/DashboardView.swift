@@ -453,8 +453,9 @@ private struct MetricCard: View {
                     .font(.system(.title3, design: .rounded).weight(.bold))
                     .monospacedDigit()
             }
-            ProgressView(value: min(1, max(0, progress)))
-                .tint(color)
+            MetricProgressBar(progress: progress, color: color)
+                .accessibilityLabel(title)
+                .accessibilityValue(value)
             Text(detail)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -470,6 +471,29 @@ private struct MetricCard: View {
             alignment: .topLeading
         )
         .cardStyle()
+    }
+}
+
+struct MetricProgressBar: View {
+    let progress: Double
+    let color: Color
+
+    private var clampedProgress: CGFloat {
+        CGFloat(min(1, max(0, progress)))
+    }
+
+    var body: some View {
+        GeometryReader { geometry in
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(Color.secondary.opacity(0.18))
+                Capsule()
+                    .fill(color)
+                    .frame(width: geometry.size.width * clampedProgress)
+            }
+        }
+        .frame(height: 4)
+        .accessibilityElement(children: .ignore)
     }
 }
 

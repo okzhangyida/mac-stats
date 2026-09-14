@@ -4,17 +4,17 @@ import SwiftUI
 @MainActor
 final class MonitorStore: ObservableObject {
     @Published private(set) var snapshot = SystemSnapshot()
-    @Published private(set) var cpuHistory = HistoryBuffer()
-    @Published private(set) var memoryHistory = HistoryBuffer()
-    @Published private(set) var temperatureHistory = HistoryBuffer()
-    @Published private(set) var networkHistory = HistoryBuffer()
-    @Published private(set) var isSampling = false
+    private(set) var cpuHistory = HistoryBuffer()
+    private(set) var memoryHistory = HistoryBuffer()
+    private(set) var temperatureHistory = HistoryBuffer()
+    private(set) var networkHistory = HistoryBuffer()
 
     @AppStorage("refreshInterval") var refreshInterval = 2.0
     @AppStorage("includeCachedMemory") var includeCachedMemory = false
     private let monitor = SystemMonitor()
     private var timer: Timer?
     private var generation = 0
+    private var isSampling = false
 
     var diskPercent: Double {
         snapshot.diskTotal == 0 ? 0 : Double(snapshot.diskUsed) / Double(snapshot.diskTotal) * 100
@@ -66,23 +66,44 @@ final class MonitorStore: ObservableObject {
                 isSampling = false
                 return
             }
-            snapshot = newSnapshot
-            cpuHistory.append(newSnapshot.cpuPercent, at: newSnapshot.sampledAt)
-            memoryHistory.append(memoryPercent, at: newSnapshot.sampledAt)
-            if let cpuTemperature = newSnapshot.averageTemperature {
-                temperatureHistory.append(cpuTemperature, at: newSnapshot.sampledAt)
-            }
-            networkHistory.append(
-                newSnapshot.networkDownPerSecond + newSnapshot.networkUpPerSecond,
-                at: newSnapshot.sampledAt
-            )
+            record(newSnapshot)
             isSampling = false
         }
     }
 
+    func record(_ newSnapshot: SystemSnapshot) {
+        var newCPUHistory = cpuHistory
+        var newMemoryHistory = memoryHistory
+        var newTemperatureHistory = temperatureHistory
+        var newNetworkHistory = networkHistory
+        newCPUHistory.append(newSnapshot.cpuPercent, at: newSnapshot.sampledAt)
+        newMemoryHistory.append(memoryPercent(for: newSnapshot), at: newSnapshot.sampledAt)
+        if let cpuTemperature = newSnapshot.averageTemperature {
+            newTemperatureHistory.append(cpuTemperature, at: newSnapshot.sampledAt)
+        }
+        newNetworkHistory.append(
+            newSnapshot.networkDownPerSecond + newSnapshot.networkUpPerSecond,
+            at: newSnapshot.sampledAt
+        )
+        cpuHistory = newCPUHistory
+        memoryHistory = newMemoryHistory
+        temperatureHistory = newTemperatureHistory
+        networkHistory = newNetworkHistory
+        snapshot = newSnapshot
+    }
+
     func resetMemoryHistory() {
-        memoryHistory = HistoryBuffer()
-        memoryHistory.append(memoryPercent, at: snapshot.sampledAt)
+        var newHistory = HistoryBuffer()
+        newHistory.append(memoryPercent, at: snapshot.sampledAt)
+        objectWillChange.send()
+        memoryHistory = newHistory
+    }
+
+    private func memoryPercent(for snapshot: SystemSnapshot) -> Double {
+        guard snapshot.memoryTotal > 0 else { return 0 }
+        let cached = includeCachedMemory ? snapshot.memoryCached : 0
+        let used = min(snapshot.memoryTotal, snapshot.memoryUsed + cached)
+        return Double(used) / Double(snapshot.memoryTotal) * 100
     }
 
     private func installTimer() {

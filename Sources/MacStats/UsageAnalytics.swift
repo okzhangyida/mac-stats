@@ -141,7 +141,11 @@ final class UsageAnalytics: ObservableObject {
     }
 
     private var buildNumber: String {
-        Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
+        if let displayBuild = Bundle.main.object(forInfoDictionaryKey: "MacStatsBuildNumber") as? String,
+           !displayBuild.isEmpty {
+            return displayBuild
+        }
+        return Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "unknown"
     }
 
     private var versionKey: String { "\(appVersion) (\(buildNumber))" }

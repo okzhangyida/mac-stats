@@ -113,6 +113,9 @@
 "settings.analytics_toggle" = "帮助改进 Mac Stats";
 "settings.analytics_help" = "发送不含设备标识的基础使用统计，帮助我们了解版本使用情况。不会发送系统状态、进程、传感器、网络速率或墙纸数据，可随时关闭。";
 "settings.privacy_notice" = "CPU、内存、温度、进程、网络和墙纸数据始终只保留在这台 Mac 上。";
+"settings.about_section" = "关于";
+"settings.version" = "版本";
+"settings.version_build" = "%@ · build %@";
 "settings.login_item_error" = "无法更新登录项：%@";
 
 "process.window_title" = "所有进程";

@@ -24,7 +24,9 @@
     <key>CFBundleShortVersionString</key>
     <string>1.0.0</string>
 	<key>CFBundleVersion</key>
-	<string>33</string>
+	<string>0</string>
+	<key>MacStatsBuildNumber</key>
+	<string></string>
 	<key>MacStatsAnalyticsEndpoint</key>
 	<string></string>
 	<key>NSHumanReadableCopyright</key>

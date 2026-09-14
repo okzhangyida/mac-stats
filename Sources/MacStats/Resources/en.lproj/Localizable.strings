@@ -113,6 +113,9 @@
 "settings.analytics_toggle" = "Help Improve Mac Stats";
 "settings.analytics_help" = "Sends basic usage statistics without a device identifier to help us understand version adoption. System status, processes, sensors, network speeds, and wallpaper data are never sent. You can turn this off at any time.";
 "settings.privacy_notice" = "CPU, memory, temperature, process, network, and wallpaper data always stay on this Mac.";
+"settings.about_section" = "About";
+"settings.version" = "Version";
+"settings.version_build" = "%@ · build %@";
 "settings.login_item_error" = "Couldn’t update the login item: %@";
 
 "process.window_title" = "All Processes";

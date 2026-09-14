@@ -166,6 +166,14 @@ struct SettingsView: View {
                 Label(L10n.string("settings.privacy_notice", fallback: "CPU, memory, temperature, process, network, and wallpaper data always stay on this Mac."), systemImage: "hand.raised.fill")
                     .foregroundStyle(.secondary)
             }
+
+            Section(L10n.string("settings.about_section", fallback: "About")) {
+                LabeledContent(L10n.string("settings.version", fallback: "Version")) {
+                    Text(versionBuildText)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                }
+            }
         }
         .formStyle(.grouped)
         .padding()
@@ -178,6 +186,13 @@ struct SettingsView: View {
 
     private var selectedMetrics: [DisplayMetric] {
         displayMetrics.split(separator: ",").compactMap { DisplayMetric(rawValue: String($0)) }
+    }
+
+    private var versionBuildText: String {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "—"
+        let rawBuild = Bundle.main.object(forInfoDictionaryKey: "MacStatsBuildNumber") as? String
+        let build = rawBuild.flatMap { $0.isEmpty ? nil : $0 } ?? "—"
+        return L10n.string("settings.version_build", fallback: "%@ · build %@", version, build)
     }
 
     private func selectionBinding(for metric: DisplayMetric) -> Binding<Bool> {

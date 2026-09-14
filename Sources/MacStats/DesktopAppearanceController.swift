@@ -143,10 +143,7 @@ final class DesktopAppearanceController: ObservableObject {
 
         installWallpaperStoreWatchers()
         cleanupWallpaperCache()
-        pollingTimer = Timer.scheduledTimer(withTimeInterval: 0.75, repeats: true) { [weak self] _ in
-            guard let controller = self else { return }
-            Task { @MainActor in controller.scheduleReconcile(delay: 0.05) }
-        }
+        updatePollingTimer()
         scheduleReconcile(delay: 0)
     }
 
@@ -203,6 +200,7 @@ final class DesktopAppearanceController: ObservableObject {
         roundedCorners = false
         defaults.set(false, forKey: DefaultsKey.hideNotch)
         defaults.set(false, forKey: DefaultsKey.roundedCorners)
+        updatePollingTimer()
         restoreCurrentWallpapers()
     }
 
@@ -213,6 +211,7 @@ final class DesktopAppearanceController: ObservableObject {
         generation += 1
         processingTask?.cancel()
         isProcessingWallpaper = false
+        updatePollingTimer()
         guard isEnabled else {
             restoreCurrentWallpapers()
             return
@@ -233,6 +232,22 @@ final class DesktopAppearanceController: ObservableObject {
                 return copy
             }
             scheduleReconcile(delay: delay)
+        }
+    }
+
+    private func updatePollingTimer() {
+        guard isEnabled else {
+            pollingTimer?.invalidate()
+            pollingTimer = nil
+            return
+        }
+        guard pollingTimer == nil else { return }
+
+        // Notifications handle normal display, Space and wallpaper changes.
+        // Keep a low-frequency fallback only for providers that emit none.
+        pollingTimer = Timer.scheduledTimer(withTimeInterval: 10, repeats: true) { [weak self] _ in
+            guard let controller = self else { return }
+            Task { @MainActor in controller.scheduleReconcile(delay: 0.05) }
         }
     }
 

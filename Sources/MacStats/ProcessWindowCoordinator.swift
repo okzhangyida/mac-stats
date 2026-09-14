@@ -2,12 +2,14 @@ import AppKit
 import SwiftUI
 
 @MainActor
-final class ProcessWindowCoordinator {
+final class ProcessWindowCoordinator: NSObject, NSWindowDelegate {
     static let shared = ProcessWindowCoordinator()
 
     private var windowController: NSWindowController?
 
-    private init() {}
+    private override init() {
+        super.init()
+    }
 
     func show(store: MonitorStore) {
         if windowController == nil {
@@ -18,6 +20,7 @@ final class ProcessWindowCoordinator {
             window.minSize = NSSize(width: 760, height: 480)
             window.styleMask = [.titled, .closable, .miniaturizable, .resizable]
             window.isReleasedWhenClosed = false
+            window.delegate = self
             window.center()
             windowController = NSWindowController(window: window)
         }
@@ -26,5 +29,10 @@ final class ProcessWindowCoordinator {
         windowController?.showWindow(nil)
         windowController?.window?.makeKeyAndOrderFront(nil)
         windowController?.window?.orderFrontRegardless()
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        guard notification.object as? NSWindow === windowController?.window else { return }
+        windowController = nil
     }
 }
