@@ -4,7 +4,7 @@ set -euo pipefail
 PROJECT_DIR="${0:A:h:h}"
 OUTPUT_DIR="$PROJECT_DIR/dist"
 APP_DIR="$OUTPUT_DIR/Mac Stats.app"
-UNIVERSAL_ROOT="$PROJECT_DIR/.build/universal"
+UNIVERSAL_ROOT="${MAC_STATS_UNIVERSAL_ROOT:-$PROJECT_DIR/.build/universal}"
 ARM_ROOT="$UNIVERSAL_ROOT/arm64"
 INTEL_ROOT="$UNIVERSAL_ROOT/x86_64"
 PLIST="$PROJECT_DIR/Resources/Info.plist"

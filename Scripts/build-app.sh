@@ -5,7 +5,8 @@ PROJECT_DIR="${0:A:h:h}"
 CONFIGURATION="${1:-release}"
 OUTPUT_DIR="$PROJECT_DIR/dist"
 APP_DIR="$OUTPUT_DIR/Mac Stats.app"
-BUILD_CACHE="$PROJECT_DIR/.build/local-cache"
+SCRATCH_PATH="${MAC_STATS_SCRATCH_PATH:-$PROJECT_DIR/.build}"
+BUILD_CACHE="$SCRATCH_PATH/local-cache"
 
 cd "$PROJECT_DIR"
 mkdir -p "$BUILD_CACHE/module" "$BUILD_CACHE/clang" "$BUILD_CACHE/swiftpm"
@@ -15,8 +16,8 @@ export XDG_CACHE_HOME="$BUILD_CACHE/swiftpm"
 if [[ ! -f "$PROJECT_DIR/Resources/AppIcon.icns" || ! -f "$PROJECT_DIR/Resources/MenuBarIcon.png" || ! -f "$PROJECT_DIR/Resources/MenuBarIcon@2x.png" ]]; then
     "$PROJECT_DIR/Scripts/generate-icon.sh"
 fi
-swift build -c "$CONFIGURATION"
-BIN_DIR="$(swift build -c "$CONFIGURATION" --show-bin-path)"
+swift build --scratch-path "$SCRATCH_PATH" -c "$CONFIGURATION"
+BIN_DIR="$(swift build --scratch-path "$SCRATCH_PATH" -c "$CONFIGURATION" --show-bin-path)"
 
 mkdir -p "$APP_DIR/Contents/MacOS" "$APP_DIR/Contents/Resources"
 cp "$BIN_DIR/MacStats" "$APP_DIR/Contents/MacOS/MacStats"

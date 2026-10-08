@@ -51,3 +51,7 @@ NOTARY_PROFILE="你的notarytool配置名" \
 
 正式脚本会生成 Universal 2 应用，启用 Hardened Runtime，签名 DMG，提交 Apple
 公证，装订公证票据，并执行 Gatekeeper 与 SHA-256 验证。
+
+构建缓存可通过 `MAC_STATS_SCRATCH_PATH`（本机）或 `MAC_STATS_UNIVERSAL_ROOT`（Universal）指定绝对路径。项目迁移后使用新缓存目录，避免复用包含旧绝对路径的 Swift 模块。
+
+设置窗口由 AppKit 的 `SettingsWindowCoordinator` 统一管理，不注册空的 SwiftUI Settings 场景；系统设置菜单和面板齿轮均打开同一窗口。

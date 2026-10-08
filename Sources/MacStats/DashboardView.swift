@@ -138,16 +138,10 @@ struct DashboardView: View {
             }
             .buttonStyle(.plain)
             .help(L10n.string("common.settings", fallback: "Settings"))
-        } else if #available(macOS 14.0, *) {
-            SettingsLink {
-                Image(systemName: "gearshape")
-            }
-            .buttonStyle(.plain)
-            .help(L10n.string("common.settings", fallback: "Settings"))
         } else {
             Button {
-                NSApplication.shared.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
-                NSApplication.shared.activate(ignoringOtherApps: true)
+                dismiss()
+                SettingsWindowCoordinator.shared.show(store: store)
             } label: {
                 Image(systemName: "gearshape")
             }

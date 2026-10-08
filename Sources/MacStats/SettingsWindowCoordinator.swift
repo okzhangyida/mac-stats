@@ -19,6 +19,7 @@ final class SettingsWindowCoordinator: NSObject, NSWindowDelegate {
             window.setContentSize(NSSize(width: 500, height: 650))
             window.minSize = NSSize(width: 500, height: 560)
             window.styleMask = [.titled, .closable, .miniaturizable]
+            window.isRestorable = false
             window.isReleasedWhenClosed = false
             window.delegate = self
             window.center()

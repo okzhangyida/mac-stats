@@ -8,16 +8,43 @@
       },
       "productVersion" : "1.0.0",
       "purpose" : "Fix inactive dashboard progress colors and long-running performance"
+    },
+    {
+      "allocatedAt" : "2026-09-30T08:44:05+08:00",
+      "build" : "20260930.01",
+      "platformMappings" : {
+        "macOSCFBundleVersion" : "2609.30.1"
+      },
+      "productVersion" : "1.0.0",
+      "purpose" : "Match status item text to native macOS menu bar typography"
+    },
+    {
+      "allocatedAt" : "2026-10-08T08:47:56+08:00",
+      "build" : "20261008.01",
+      "platformMappings" : {
+        "macOSCFBundleVersion" : "2610.8.1"
+      },
+      "productVersion" : "1.0.0",
+      "purpose" : "Fix blank settings window by using a single AppKit window lifecycle"
+    },
+    {
+      "allocatedAt" : "2026-10-08T08:52:59+08:00",
+      "build" : "20261008.02",
+      "platformMappings" : {
+        "macOSCFBundleVersion" : "2610.8.2"
+      },
+      "productVersion" : "1.0.0",
+      "purpose" : "Universal signed and notarized release: fix blank settings window and native menu bar typography"
     }
   ],
   "current" : {
-    "allocatedAt" : "2026-09-14T09:33:09+08:00",
-    "build" : "20260914.01",
+    "allocatedAt" : "2026-10-08T08:52:59+08:00",
+    "build" : "20261008.02",
     "platformMappings" : {
-      "macOSCFBundleVersion" : "2609.14.1"
+      "macOSCFBundleVersion" : "2610.8.2"
     },
     "productVersion" : "1.0.0",
-    "purpose" : "Fix inactive dashboard progress colors and long-running performance"
+    "purpose" : "Universal signed and notarized release: fix blank settings window and native menu bar typography"
   },
   "legacyBuilds" : [
     {

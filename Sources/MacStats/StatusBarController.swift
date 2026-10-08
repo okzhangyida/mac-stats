@@ -41,7 +41,8 @@ final class StatusBarController: NSObject, NSPopoverDelegate {
         button.sendAction(on: [.leftMouseUp])
         button.image = menuBarIcon
         button.imagePosition = .imageLeading
-        button.font = .monospacedDigitSystemFont(ofSize: 11, weight: .medium)
+        // Use the system menu bar typography, including its default size.
+        button.font = .menuBarFont(ofSize: 0)
         item.isVisible = true
         updateStatusItem()
 
